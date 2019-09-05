@@ -2,28 +2,26 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:n="clr-namespace:ScreenToGif.Controls"
         xmlns:u="clr-namespace:ScreenToGif.Util"
-        xmlns:c="clr-namespace:ScreenToGif.Util.Converters"
         xmlns:s="clr-namespace:System;assembly=mscorlib"
+        xmlns:t="clr-namespace:ScreenToGif"
+        xmlns:h="clr-namespace:ScreenToGif.Controls.Shapes"
         x:Class="ScreenToGif.Windows.Other.TestField" x:Name="ThisWindow"
-        Title="Window Test" Height="500" Width="394" WindowStartupLocation="CenterScreen" Background="#FFFFFFFF" 
-        Loaded="WindowTest_OnLoaded" LocationChanged="WindowTest_OnLocationChanged">
-
-    <Window.Resources>
-        <c:RoutedCommandToInputGestureTextConverter x:Key="CommandToInputGestureTextConverter"/>
-    </Window.Resources>
-
-    <Window.CommandBindings>
-        <CommandBinding Command="Print" CanExecute="CanExecute" Executed="Print_Executed"/>
-        <CommandBinding Command="Copy" CanExecute="CanExecute" Executed="Copy_Executed"/>
-        <CommandBinding Command="Save" CanExecute="CanExecute" Executed="Save_Executed"/>
-    </Window.CommandBindings>
+        Title="Window Test" Height="200" Width="400" WindowStartupLocation="CenterScreen" Background="{DynamicResource Panel.Background}" 
+        Loaded="WindowTest_OnLoaded" LocationChanged="WindowTest_OnLocationChanged" Closed="Window_Closed" SnapsToDevicePixels="True">
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="25"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
         <!--<Grid.Resources>
             <ResourceDictionary>
@@ -33,82 +31,93 @@
             </ResourceDictionary>
         </Grid.Resources>-->
 
-        <!--<n:SplitButton Grid.Row="1" Grid.Column="2" x:Name="MainSplitButton" Style="{StaticResource SplitButton.NoText}" ContentHeight="20">
-            <n:ImageMenuItem Image="{StaticResource Vector.Crop}" Header="Region" Command="Print" Click="MenuItem_OnClick"/>
-            <n:ImageMenuItem Image="{StaticResource Vector.Application}" Header="Window" Command="Copy" Click="MenuItem2_OnClick"/>
-            <n:ImageMenuItem Image="{StaticResource Vector.WidthHeight}" Header="Screen" Command="Save" Click="MenuItem3_OnClick"/>
-        </n:SplitButton>-->
+        <!--<Button Grid.Row="0" Grid.Column="0" Content="Select" Click="Select_Click"/>
+        <Button Grid.Row="0" Grid.Column="1" Content="Shape" Click="Shape_Click"/>
+        <Button Grid.Row="0" Grid.Column="2" Content="Ink" Click="Ink_Click"/>
 
-        <!--<r:RadialPanel Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="4">
-            <RadioButton Content="1"/>
-            <RadioButton Content="2"/>
-            <RadioButton Content="3"/>
-            <RadioButton Content="4"/>
-            <RadioButton Content="5"/>
-            <RadioButton Content="6"/>
-            <RadioButton Content="7"/>
-            <RadioButton Content="8"/>
-            <RadioButton Content="9"/>
-            <RadioButton Content="10"/>
-            <RadioButton Content="11"/>
-        </r:RadialPanel>-->
+        <Button Grid.Row="1" Grid.Column="0" Content="Thickness" Click="Thickness_Click"/>
+        <Button Grid.Row="1" Grid.Column="1" Content="Color" Click="Color_Click"/>
+        <Button Grid.Row="1" Grid.Column="2" Content="DashArray" Click="DashArray_Click"/>-->
 
-        <!--<n:StatusList Grid.Row="0" Grid.Column="0" x:Name="StatusList"/>
-        
-        <Button Grid.Row="1" Content="Add" Click="AddButton_OnClick"/>-->
-        
-        <!--<ListView Grid.Row="0" Grid.RowSpan="3" Grid.Column="0">
-            <n:EncoderListViewItem OutputType="Apng" CurrentFrame="10" Text="Encoding" Status="Processing" FrameCount="100" Percentage="20"/>
-            <n:EncoderListViewItem Status="Completed" SizeInBytes="2000000" OutputType="Gif" CopiedToClipboard="True" CommandExecuted="True" Uploaded="True" UploadLink="www.imgur.com"/>
-        </ListView>-->
+        <!--<Canvas Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" x:Name="MainCanvas">
+            <h:Triangle x:Name="TestTriangle" Height="100" Width="100" Stroke="Black" StrokeThickness="5" Canvas.Left="100" Canvas.Top="100"/>
+        </Canvas>-->
 
-        <!--<r:HexadecimalBox Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="4" HorizontalAlignment="Center" Width="100"/>-->
-        <!--<n:KeyBox Grid.Row="1" HorizontalAlignment="Center" MinWidth="100" AllowAllKeys="True"/>-->
+        <!--<n:MoveResizeControl Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" x:Name="FreeTextOverlayControl" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ClipToBounds="True" CanResize="True">
+            <TextBlock x:Name="FreeTextTextBlock" Padding="0" Text="LALALA"  FontSize="20" Foreground="Black"/>
+        </n:MoveResizeControl>-->
 
-        <!--<StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
-            <r:ImageButton x:Name="SnapButton" Content="{StaticResource Vector.Crop}" Margin="0" Style="{StaticResource Style.Button.NoText}" 
-                               HorizontalContentAlignment="Center" Effect="{StaticResource Shadow.Foreground.Small}" MaxSize="20" FlowDirection="LeftToRight" 
-                               Padding="2" TabIndex="2">
-                <r:ImageButton.ToolTip>
-                    <ToolTip HorizontalOffset="-5" Placement="Bottom" Content="{DynamicResource Recorder.SnapToWindow}"/>
-                </r:ImageButton.ToolTip>
-            </r:ImageButton>
+        <!--<n:DrawingCanvas Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" x:Name="MainDrawingCanvas" DrawingMode="Select">
+            --><!--<h:Triangle x:Name="TestTriangle" Height="100" Width="100" Stroke="Black" StrokeThickness="5" Canvas.Left="100" Canvas.Top="100"/>--><!--
+        </n:DrawingCanvas>-->
 
-            <r:ImageButton Content="{StaticResource Vector.Crop}" Margin="0" Style="{StaticResource Style.Button.NoText}" 
-                               HorizontalContentAlignment="Center" Effect="{StaticResource Shadow.Foreground.Small}" MaxSize="20" FlowDirection="LeftToRight" 
-                               Padding="2" TabIndex="2">
-                <r:ImageButton.ToolTip>
-                    <ToolTip HorizontalOffset="-5" Placement="Bottom" Content="{DynamicResource Recorder.SnapToWindow}"/>
-                </r:ImageButton.ToolTip>
-            </r:ImageButton>
+        <!--<Viewbox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
+            <StackPanel>
+                <RadioButton Content="Abc" IsChecked="True" IsEnabled="True" ToolTip="Hello, how are you?"/>
+                <RadioButton Content="Def" IsEnabled="True" ToolTip=""/>
+            </StackPanel>
+        </Viewbox>-->
 
-            <r:ImageButton Content="{StaticResource Vector.Crop}" Margin="0" Style="{StaticResource Style.Button.NoText}" 
-                               HorizontalContentAlignment="Center" Effect="{StaticResource Shadow.Foreground.Small}" MaxSize="20" FlowDirection="LeftToRight" 
-                               Padding="2" TabIndex="2">
-                <r:ImageButton.ToolTip>
-                    <ToolTip HorizontalOffset="-5" Placement="Bottom" Content="{DynamicResource Recorder.SnapToWindow}"/>
-                </r:ImageButton.ToolTip>
-            </r:ImageButton>
-        </StackPanel>-->
+        <!--<n:StatusBand Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Visibility="Visible" Type="Warning" Text="Example"/>-->
 
-        <!--<Label Grid.Row="0" Grid.Column="0" Name="LeftLabel" Content="{Binding Left, ElementName=ThisWindow}"/>
-        <Label Grid.Row="1" Grid.Column="0" Name="LeftLabel2" Content="{Binding Left, ElementName=ThisWindow}"/>
-        
-        <Label Grid.Row="0" Grid.Column="1" Name="TopLabel" Content="{Binding Top, ElementName=ThisWindow}" HorizontalAlignment="Center"/>
-        <Label Grid.Row="1" Grid.Column="1" Name="TopLabel2" Content="{Binding Top, ElementName=ThisWindow}" HorizontalAlignment="Center"/>
+        <!--<DataGrid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="2" HeadersVisibility="All" SelectedIndex="0">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="LALALA" Width="100" IsReadOnly="True" Binding="{Binding Tag}" CellStyle="{StaticResource Style.Cell.Center}" HeaderStyle="{StaticResource Style.Header.Center}"/>
+                <DataGridTextColumn Header="LILILI" Width="100" IsReadOnly="True" Binding="{Binding Content}"/>
+                <DataGridTextColumn Header="LALALA" Width="100" IsReadOnly="True" Binding="{Binding Width}" CellStyle="{StaticResource Style.Cell.Right}" HeaderStyle="{StaticResource Style.Header.Right}"/>
+            </DataGrid.Columns>
 
-        <Label Grid.Row="0" Grid.Column="3" Name="RightLabel" Content="{Binding Width, ElementName=ThisWindow}"/>
-        <Label Grid.Row="1" Grid.Column="3" Name="RightLabel2" Content="{Binding Width, ElementName=ThisWindow}"/>-->
+            <Label Content="LALA" Tag="Hello" Width="20"/>
+            <Label Content="LILI" Tag="Hello 2" Width="10"/>
+        </DataGrid>-->
 
-        <!--<Grid Grid.Row="2" Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="75*"/>
-                <RowDefinition Height="40*"/>
-            </Grid.RowDefinitions>
+        <!--<n:ImageButton Grid.Row="2" Grid.Column="0" Margin="3" Content="{StaticResource Vector.Ok}" Style="{StaticResource Style.Button.Vertical.Border}" ContentHeight="20" ContentWidth="20"/>
+        <n:ImageButton Grid.Row="2" Grid.Column="1" Margin="3" Content="{StaticResource Vector.Ok}" Style="{StaticResource Style.Button.Vertical.Border}" ContentHeight="20" ContentWidth="20" IsEnabled="False"/>
+        <n:ImageButton Grid.Row="2" Grid.Column="2" Margin="3" Content="{StaticResource Vector.Ok}" ContentHeight="20" ContentWidth="20" KeyGesture="Ctrl + Z"/>-->
 
+        <!--<Menu Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
+            <n:ImageMenuItem Header="TopLevel" InputGestureText="Ctrl">
+                <n:ImageMenuItem Header="Sub" InputGestureText="Ctrl + Z" Image="{StaticResource Vector.Add}">
+                    <n:ImageMenuItem Header="SubSub" InputGestureText="Ctrl + A"/>
+                    <n:ImageMenuItem Header="SubSub" InputGestureText="Ctrl + A"/>
+                    <n:ImageMenuItem Header="SubSub" InputGestureText="Ctrl + A"/>
+                </n:ImageMenuItem>
 
-            <TextBox x:Name="InputTextBox" Margin="10,10,65,10" TextWrapping="Wrap" Text="M 1.81,7 C1.81,7 0,7 0,7 0,7 3.18,3.5 3.18,3.5 3.18,3.5 0,0 0,0 0,0 1.81,0 1.81,0 1.81,0 5,3.5 5,3.5 5,3.5 1.81,7 1.81,7 z" Grid.Row="1"/>
-            <Button x:Name="RefreshButton" Content="Update" Margin="0,10,5,0" Grid.Row="1" Height="20" VerticalAlignment="Top" Click="RefreshButton_Click" HorizontalAlignment="Right" Width="55"/>
-        </Grid>-->
+                <n:ImageMenuItem Header="Sub" InputGestureText="Ctrl + Z">
+                    <n:ImageMenuItem Header="SubSub" InputGestureText="Ctrl + A"/>
+                    <n:ImageMenuItem Header="SubSub" InputGestureText="Ctrl + A"/>
+                    <n:ImageMenuItem Header="SubSub" InputGestureText="Ctrl + A"/>
+                </n:ImageMenuItem>
+
+                <n:ImageMenuItem Header="Sub" InputGestureText="Ctrl + A" Image="{StaticResource Vector.Add}"/>
+                <n:ImageMenuItem Header="Sub" InputGestureText="Ctrl + A"/>
+            </n:ImageMenuItem>
+
+            <n:ImageMenuItem Header="TopLevel"/>
+            <n:ImageMenuItem Header="TopLevel"/>
+        </Menu>-->
+
+        <!--<n:ImageButton Grid.Row="3" Grid.Column="0" Margin="5" Content="{StaticResource Vector.Save}" ContentHeight="20" Style="{StaticResource Style.Button.Horizontal.Fade}"/>
+        <n:ImageButton Grid.Row="3" Grid.Column="1" Margin="5" Content="{StaticResource Vector.Save}" ContentHeight="20" Style="{StaticResource Style.Button.Horizontal.Fade}"/>
+        <n:ImageButton Grid.Row="3" Grid.Column="2" Margin="5" Content="{StaticResource Vector.Save}" ContentHeight="20" IsEnabled="False" Style="{StaticResource Style.Button.Horizontal.Fade}"/>-->
+
+        <!--<n:ImageToggleButton Grid.Row="3" Grid.Column="0" Margin="5" Content="{StaticResource Vector.Save}" ContentHeight="20" />
+        <n:ImageToggleButton Grid.Row="3" Grid.Column="1" Margin="5" Content="{StaticResource Vector.Save}" ContentHeight="20" Style="{StaticResource Style.ToggleButton.NoBorder}"/>
+        <n:ImageToggleButton Grid.Row="3" Grid.Column="2" Margin="5" Content="{StaticResource Vector.Save}" ContentHeight="20" IsEnabled="False" Style="{StaticResource Style.ToggleButton.NoBorder}"/>-->
+
+        <!--<ComboBox Grid.Row="2" Grid.Column="0" Margin="10,5" MinWidth="100" MaxWidth="150" IsEditable="True" SelectedIndex="0">
+            <ComboBoxItem Content="ABC"/>
+            <ComboBoxItem Content="DEF"/>
+        </ComboBox>
+
+        <ComboBox Grid.Row="2" Grid.Column="1" Margin="10,5" MinWidth="100" MaxWidth="150" IsEditable="True" IsEnabled="False" SelectedIndex="0">
+            <ComboBoxItem Content="ABC"/>
+            <ComboBoxItem Content="DEF"/>
+        </ComboBox>
+
+        <ComboBox Grid.Row="2" Grid.Column="2" Margin="10,5" MinWidth="100" MaxWidth="150" IsEditable="False" IsEnabled="True" SelectedIndex="0">
+            <ComboBoxItem Content="ABC"/>
+            <ComboBoxItem Content="DEF"/>
+        </ComboBox>-->
     </Grid>
 </Window>

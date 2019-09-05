@@ -66,10 +66,12 @@ namespace ScreenToGif.Windows.Other
                 Dispatcher.InvokeAsync(() =>
                 {
                     _upperPlayer.MediaOpened += UpperMediaPlayer_MediaOpened;
+                    _upperPlayer.MediaFailed += MediaPlayer_MediaFailed;
                     _upperPlayer.Open(file);
                     _upperPlayer.Pause();
 
                     _lowerPlayer.MediaOpened += LowerMediaplayer_MediaOpened;
+                    _lowerPlayer.MediaFailed += MediaPlayer_MediaFailed;
                     _lowerPlayer.Open(file);
                     _lowerPlayer.Pause();
                 });
@@ -78,7 +80,8 @@ namespace ScreenToGif.Windows.Other
             }
             catch (Exception ex)
             {
-                LogWriter.Log(ex, "Video Loading Error");
+                LogWriter.Log(ex, "Video loading error");
+                StatusBand.Error(LocalizationHelper.Get("S.ImportVideo.Error") + Environment.NewLine + ex.Message);
                 return false;
             }
         }
@@ -115,6 +118,14 @@ namespace ScreenToGif.Windows.Other
         private void UpperMediaPlayer_MediaOpened(object sender, EventArgs e)
         {
             WhenBothLoaded();
+        }
+
+        private void MediaPlayer_MediaFailed(object sender, EventArgs e)
+        {
+            Cursor = Cursors.Arrow;
+            LoadingLabel.Visibility = Visibility.Collapsed;
+
+            StatusBand.Warning(LocalizationHelper.Get("S.ImportVideo.Error"));
         }
 
         private void SelectionSlider_LowerValueChanged(object sender, RoutedEventArgs e)
@@ -339,7 +350,7 @@ namespace ScreenToGif.Windows.Other
         private void SeekNextFrame()
         {
             //If more frames remain to capture...
-            if (!_cancelled && 0 < _positions.Count)
+            if (0 < _positions.Count)
             {
                 //Seek to next position and start watchdog timer
                 _lowerPlayer.Position = _positions.Dequeue();
@@ -353,8 +364,7 @@ namespace ScreenToGif.Windows.Other
 
                 GC.Collect();
 
-                if (!_cancelled)
-                    DialogResult = true;
+                DialogResult = true;
             }
         }
 
@@ -375,14 +385,13 @@ namespace ScreenToGif.Windows.Other
 
         private void CaptureCurrentFrame(MediaPlayer player)
         {
-            var thumbBit = CaptureFrame(player) as BitmapFrame;
-
-            if (thumbBit != null)
+            if (CaptureFrame(player) is BitmapFrame thumbBit)
                 FrameList.Add(thumbBit);
 
             GC.Collect();
 
-            SeekNextFrame();
+            if (!_cancelled)
+                SeekNextFrame();
         }
 
         private Freezable CaptureFrame(MediaPlayer player)

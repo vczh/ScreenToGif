@@ -262,7 +262,7 @@ namespace ScreenToGif.ImageUtil.Gif.Encoder
 
             //Write the packed fields.
             WriteByte(ConvertToByte(bitArray));
-            WriteShort(delay / 10); //Delay x 1/100 seconds. Minimum of 10ms. Centiseconds.
+            WriteShort((int)Math.Round(delay / 10.0f, MidpointRounding.AwayFromZero)); //Delay x 1/100 seconds. Minimum of 10ms. Centiseconds.
             WriteByte(FindTransparentColorIndex()); //Transparency Index.
             WriteByte(0); //Terminator.
         }
@@ -431,7 +431,7 @@ namespace ScreenToGif.ImageUtil.Gif.Encoder
 
         private void CalculateColorTableSize()
         {
-            //Logical Screen Description, Number of Colors, Byte Lenght
+            //Logical Screen Description, Number of Colors, Byte length.
             //0 = 2 = 6
             //1 = 4 = 12
             //2 = 8 = 24
@@ -441,7 +441,7 @@ namespace ScreenToGif.ImageUtil.Gif.Encoder
             //6 = 128 = 384
             //7 = 256 = 768
             //The inverse calculation is: 2^(N + 1) 
-            //and x3 for the byte lenght.
+            //and x3 for the byte length.
 
             //If the colorsCount == 1, 
             //return zero instead of calculating it, because of the Log(0) call.

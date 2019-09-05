@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ScreenToGif.Util;
@@ -13,20 +14,31 @@ namespace ScreenToGif.Controls
 
         public static readonly DependencyProperty WatermarkProperty = DependencyProperty.Register("Watermark", typeof(string), typeof(ExtendedTextBox), new PropertyMetadata(""));
 
+        public static readonly DependencyProperty IsObligatoryProperty = DependencyProperty.Register("IsObligatory", typeof(bool), typeof(ExtendedTextBox));
+
         #endregion
 
         #region Properties
 
+        [Bindable(true), Category("Common")]
         public bool AllowSpacing
         {
             get => (bool)GetValue(AllowSpacingyProperty);
             set => SetValue(AllowSpacingyProperty, value);
         }
 
+        [Bindable(true), Category("Common")]
         public string Watermark
         {
             get => (string)GetValue(WatermarkProperty);
             set => SetValue(WatermarkProperty, value);
+        }
+
+        [Bindable(true), Category("Common")]
+        public bool IsObligatory
+        {
+            get => (bool)GetValue(IsObligatoryProperty);
+            set => SetValue(IsObligatoryProperty, value);
         }
 
         #endregion
@@ -65,6 +77,21 @@ namespace ScreenToGif.Controls
 
             if (!UserSettings.All.TripleClickSelection)
                 SelectAll();
+        }
+
+        public bool IsNullOrWhiteSpace()
+        {
+            return string.IsNullOrWhiteSpace(Text);
+        }
+
+        public bool IsNullOrEmpty()
+        {
+            return string.IsNullOrEmpty(Text);
+        }
+
+        public string Trim()
+        {
+            return Text.Trim();
         }
     }
 }

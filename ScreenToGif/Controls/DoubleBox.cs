@@ -15,6 +15,8 @@ namespace ScreenToGif.Controls
         #region Variables
 
         private bool _ignore;
+        private string _baseFormat = "{0:###,###,###,###,##0.";
+        private string _format = "{0:###,###,###,###,##0.00}";
 
         #endregion
 
@@ -28,6 +30,9 @@ namespace ScreenToGif.Controls
 
         public static readonly DependencyProperty MinimumProperty = DependencyProperty.Register("Minimum", typeof(double), typeof(DoubleBox),
             new FrameworkPropertyMetadata(0D, OnMinimumPropertyChanged));
+
+        public static readonly DependencyProperty DecimalsProperty = DependencyProperty.Register("Decimals", typeof(int), typeof(DoubleBox),
+            new FrameworkPropertyMetadata(2, OnDecimalsPropertyChanged));
 
         public static readonly DependencyProperty StepProperty = DependencyProperty.Register("StepValue", typeof(double), typeof(DoubleUpDown), 
             new FrameworkPropertyMetadata(1d));
@@ -66,6 +71,13 @@ namespace ScreenToGif.Controls
         {
             get => (double)GetValue(MinimumProperty);
             set => SetValue(MinimumProperty, value);
+        }
+
+        [Bindable(true), Category("Common")]
+        public int Decimals
+        {
+            get => (int)GetValue(DecimalsProperty);
+            set => SetValue(DecimalsProperty, value);
         }
 
         /// <summary>
@@ -115,7 +127,7 @@ namespace ScreenToGif.Controls
             if (!(d is DoubleBox doubleBox))
                 return;
 
-            if (doubleBox.Value > doubleBox?.Maximum)
+            if (doubleBox.Value > doubleBox.Maximum)
                 doubleBox.Value = doubleBox.Maximum;
         }
 
@@ -130,9 +142,11 @@ namespace ScreenToGif.Controls
             else if (doubleBox.Value < doubleBox.Minimum)
                 doubleBox.Value = doubleBox.Minimum;
 
+            doubleBox.Value = Math.Round(doubleBox.Value, doubleBox.Decimals);
+
             if (!doubleBox._ignore)
             {
-                var value = string.Format(CultureInfo.CurrentCulture, "{0:###,###,##0.0###}", doubleBox.Value * doubleBox.Scale);
+                var value = string.Format(CultureInfo.CurrentCulture, doubleBox._format, doubleBox.Value * doubleBox.Scale);
 
                 if (!string.Equals(doubleBox.Text, value))
                     doubleBox.Text = value;
@@ -150,6 +164,16 @@ namespace ScreenToGif.Controls
                 doubleBox.Value = doubleBox.Minimum;
         }
 
+        private static void OnDecimalsPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (!(d is DoubleBox doubleBox))
+                return;
+
+            doubleBox._format = doubleBox._baseFormat + "".PadRight(doubleBox.Decimals, '0') + "}";
+
+            doubleBox.Value = Math.Round(doubleBox.Value, doubleBox.Decimals);
+        }
+
         private static void OnUpdateOnInputPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             ((DoubleBox)d).UpdateOnInput = (bool)e.NewValue;
@@ -163,17 +187,14 @@ namespace ScreenToGif.Controls
             //For example, The value 600 and the scale 1.25 should display the text 750.
             //Text = Value * Scale.
 
-            doubleBox.Text = string.Format(CultureInfo.CurrentCulture, "{0:###,###,##0.0###}", doubleBox.Value * doubleBox.Scale);
+            doubleBox.Text = string.Format(CultureInfo.CurrentCulture, doubleBox._format, doubleBox.Value * doubleBox.Scale);
         }
 
         #endregion
 
         #region Custom Events
 
-        /// <summary>
-        /// Create a custom routed event by first registering a RoutedEventID, this event uses the bubbling routing strategy.
-        /// </summary>
-        public static readonly RoutedEvent ValueChangedEvent;
+        public static readonly RoutedEvent ValueChangedEvent = EventManager.RegisterRoutedEvent("ValueChanged", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(DoubleBox));
 
         /// <summary>
         /// Event raised when the numeric value is changed.
@@ -189,8 +210,7 @@ namespace ScreenToGif.Controls
             if (ValueChangedEvent == null)
                 return;
 
-            var newEventArgs = new RoutedEventArgs(ValueChangedEvent);
-            RaiseEvent(newEventArgs);
+            RaiseEvent(new RoutedEventArgs(ValueChangedEvent));
         }
 
         #endregion
@@ -208,11 +228,22 @@ namespace ScreenToGif.Controls
 
             AddHandler(DataObject.PastingEvent, new DataObjectPastingEventHandler(OnPasting));
 
-            Text = string.Format(CultureInfo.CurrentCulture, "{0:###,###,##0.0###}", Value);
+            _format = _baseFormat + "".PadRight(Decimals, '0') + "}";
+        }
+
+        protected override void OnInitialized(EventArgs e)
+        {
+            base.OnInitialized(e);
+
+            Text = string.Format(CultureInfo.CurrentCulture, _format, Value);
         }
 
         protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
         {
+            //Only sets the focus if not clicking on the Up/Down buttons of a IntegerUpDown.
+            if (e.OriginalSource is TextBlock || e.OriginalSource is Border)
+                return;
+
             if (!IsKeyboardFocusWithin)
             {
                 e.Handled = true;
@@ -224,7 +255,8 @@ namespace ScreenToGif.Controls
         {
             base.OnGotFocus(e);
 
-            SelectAll();
+            if (e.Source is DoubleBox)
+                SelectAll();
         }
 
         protected override void OnPreviewTextInput(TextCompositionEventArgs e)
@@ -246,7 +278,7 @@ namespace ScreenToGif.Controls
 
         protected override void OnTextChanged(TextChangedEventArgs e)
         {
-            if (!UpdateOnInput)
+            if (!UpdateOnInput || _ignore)
                 return;
 
             if (string.IsNullOrEmpty(Text)) return;
@@ -254,7 +286,7 @@ namespace ScreenToGif.Controls
 
             _ignore = true;
 
-            Value = Convert.ToDouble(Text, CultureInfo.CurrentCulture) / Scale;
+            Value = Math.Round(Convert.ToDouble(Text, CultureInfo.CurrentCulture) / Scale, Decimals);
 
             _ignore = false;
 
@@ -276,25 +308,25 @@ namespace ScreenToGif.Controls
                 _ignore = true;
 
                 Value = Convert.ToDouble(Text, CultureInfo.CurrentCulture);
-                Text = string.Format(CultureInfo.CurrentCulture, "{0:###,###,##0.0###}", Value);
+                Text = string.Format(CultureInfo.CurrentCulture, _format, Value);
 
                 _ignore = false;
                 return;
             }
 
-            Text = string.Format(CultureInfo.CurrentCulture, "{0:###,###,##0.0###}", Value);
+            Text = string.Format(CultureInfo.CurrentCulture, _format, Value);
         }
 
-        //protected override void OnKeyDown(KeyEventArgs e)
-        //{
-        //    if (e.Key == Key.Enter || e.Key == Key.Return)
-        //    {
-        //        e.Handled = true;
-        //        MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
-        //    }
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter || e.Key == Key.Return)
+            {
+                e.Handled = true;
+                MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+            }
 
-        //    base.OnKeyDown(e);
-        //}
+            base.OnKeyDown(e);
+        }
 
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
@@ -339,7 +371,7 @@ namespace ScreenToGif.Controls
         private bool IsEntryAllowed(TextBox textBox, string text)
         {
             //Digits, points or commas.
-            var regex = new Regex(@"^[0-9]|\.|\,$");
+            var regex = new Regex(@"^[0-9]|\.|\,$"); //TODO: Support for multiple cultures.
 
             //Checks if it's a valid char based on the context.
             return regex.IsMatch(text) && IsEntryAllowedInContext(textBox, text);
@@ -415,8 +447,10 @@ namespace ScreenToGif.Controls
 
         private bool IsTextAllowed(string text)
         {
-            var regex = new Regex(@"^((\d+)|(\d{1,3}(\.\d{3})+)|(\d{1,3}(\.\d{3})(\,\d{3})+))((\,\d{4})|(\,\d{3})|(\,\d{2})|(\,\d{1})|(\,))?$");
-            return regex.IsMatch(text);
+            return double.TryParse(text, out double result);
+
+            //var regex = new Regex(@"^((\d+)|(\d{1,3}(\.\d{3})+)|(\d{1,3}(\.\d{3})(\,\d{3})+))((\,\d{4})|(\,\d{3})|(\,\d{2})|(\,\d{1})|(\,))?$", RegexOptions.CultureInvariant);
+            //return regex.IsMatch(text);
         }
 
         #endregion

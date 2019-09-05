@@ -3,8 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using ScreenToGif.Controls;
+using ScreenToGif.Model;
 using ScreenToGif.Util;
-using ScreenToGif.Util.Model;
 
 namespace ScreenToGif.Windows.Other
 {
@@ -23,7 +23,7 @@ namespace ScreenToGif.Windows.Other
                 return;
 
             KeysDataGrid.ItemsSource = InternalList;
-            KeysDataGrid.SelectedIndex = 0;
+            KeysDataGrid.FocusOnFirstCell();
         }
 
         private void RemoveButton_OnMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)

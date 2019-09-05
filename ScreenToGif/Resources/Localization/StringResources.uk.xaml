@@ -49,12 +49,12 @@
     <s:String x:Key="Donate">Пожертва</s:String>
     <s:String x:Key="About">Про</s:String>
     
-    <s:String x:Key="Application.Homepage">Домашня сторінка</s:String>
-    <s:String x:Key="Application.Homepage.StartUp">Стартове вікно</s:String>
-    <s:String x:Key="Application.Homepage.Recorder">Запис з екрану</s:String>
-    <s:String x:Key="Application.Homepage.Webcam">Запис з вебкамери</s:String>
-    <s:String x:Key="Application.Homepage.Board">Запис з дошки</s:String>
-    <s:String x:Key="Application.Homepage.Editor">Вікно редактора</s:String>
+    <s:String x:Key="S.Application.Other.Homepage">Домашня сторінка:</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.StartUp">Стартове вікно</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Recorder">Запис з екрану</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Webcam">Запис з вебкамери</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Board">Запис з дошки</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Editor">Вікно редактора</s:String>
     
     <s:String x:Key="Application.ScreenRecorder">Запис з екрану</s:String>
     <s:String x:Key="Application.ScreenRecorder.RecordMouse">Показувати курсор миші під час запису.</s:String>
@@ -70,10 +70,6 @@
     <s:String x:Key="Application.ScreenRecorder.AsyncRecording">Ввімкнути асинхронний запис.</s:String>
     <s:String x:Key="Application.ScreenRecorder.AsyncRecording.Info">(Допомагає зменшити затримки інтерфейсу під час запису)</s:String>
     
-    <s:String x:Key="Application.Shortcuts">Клавіші швидкого доступу</s:String>
-    <s:String x:Key="Application.Shortcuts.StartPause">Старт/Пауза:</s:String>
-    <s:String x:Key="Application.Shortcuts.Stop">Зупинити:</s:String>
-
     <s:String x:Key="Application.Other">Інше</s:String>
     <!--<s:String x:Key="Application.Other.CheckForUpdates">Check for updates.</s:String>-->
     
@@ -82,12 +78,12 @@
     <s:String x:Key="Interface.Background">Тло</s:String>
     <s:String x:Key="Interface.Foreground">Передній план</s:String>
     <s:String x:Key="Interface.BoardBackground">Тло дошки</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme">Кольорова схема</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.VeryLight">Дуже світлий</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Light">Світлий</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Medium">Середній</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Dark">Темний</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Custom">Вибірковий</s:String>
+    <s:String x:Key="Interface.Theme.Scheme">Кольорова схема</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.VeryLight">Дуже світлий</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Light">Світлий</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Medium">Середній</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Dark">Темний</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Custom">Вибірковий</s:String>
     
     <s:String x:Key="Interface.EditorBackground.GridSize">Розмір комірки</s:String>
     <s:String x:Key="Interface.EditorBackground.GridSize.VerySmall">Дуже малий</s:String>
@@ -111,6 +107,9 @@
     <s:String x:Key="Interface.Other.HideTitleBar">Приховати панель меню (полегшений режим).</s:String>
     <!--<s:String x:Key="Interface.Other.TripleClickSelection">Enable triple-click to select the text.</s:String>-->
   
+    <s:String x:Key="S.Shortcuts.Recorders.StartPause">Старт/Пауза:</s:String>
+    <s:String x:Key="S.Shortcuts.Recorders.Stop">Зупинити:</s:String>
+    
     <s:String x:Key="Language.AppLanguage">Мова</s:String>
     
     <s:String x:Key="TempFiles.FilesAndFolders">Тимчасові файли та папки</s:String>
@@ -587,7 +586,7 @@
     <!--<s:String x:Key="OverrideDelay.Info">This new value will replace the duration (delay) of all selected frames. The value can be from 10ms to 25500ms.</s:String>-->
     <!--<s:String x:Key="IncreaseDecreaseDelay.Info">This value will decrease/increase the duration (delay) of each selected frame.&#x0d;You can decrement/increment by selecting a value between -10000ms and 10000ms, but the final duration of each frame will be restricted to between 10ms and 25500ms</s:String>-->
     
-    <s:String x:Key="Transitions.Lenght">Довжина переходу</s:String>
+    <s:String x:Key="Transitions.Length">Довжина переходу</s:String>
     <!--<s:String x:Key="Transitions.FadeTo">Fade To...</s:String>-->
     <!--<s:String x:Key="Transitions.FadeTo.Frame">The next frame</s:String>-->
     <!--<s:String x:Key="Transitions.FadeTo.Color">A color</s:String>-->

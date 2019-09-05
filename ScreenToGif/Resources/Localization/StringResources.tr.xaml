@@ -41,6 +41,7 @@
     <!--Options Page-->
     <s:String x:Key="Title.Options">Screen To Gif - Ayarlar</s:String>
     <s:String x:Key="Application">Uygulama</s:String>
+    <s:String x:Key="S.Shortcuts">Klavye Kısayolları</s:String>
     <s:String x:Key="Interface">Arayüz</s:String>
     <s:String x:Key="Image">Görüntü</s:String>
     <s:String x:Key="Language">Dil</s:String>
@@ -49,12 +50,12 @@
     <s:String x:Key="Donate">Bağış Yap</s:String>
     <s:String x:Key="About">Hakkında</s:String>
     
-    <s:String x:Key="Application.Homepage">Anasayfa</s:String>
-    <s:String x:Key="Application.Homepage.StartUp">Başlangıç Ekranı</s:String>
-    <s:String x:Key="Application.Homepage.Recorder">Ekran Kaydedici</s:String>
-    <s:String x:Key="Application.Homepage.Webcam">Webcam Kaydedici</s:String>
-    <s:String x:Key="Application.Homepage.Board">Pano Kaydedici</s:String>
-    <s:String x:Key="Application.Homepage.Editor">Editör Penceresi</s:String>
+    <s:String x:Key="S.Application.Other.Homepage">Anasayfa:</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.StartUp">Başlangıç Ekranı</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Recorder">Ekran Kaydedici</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Webcam">Webcam Kaydedici</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Board">Pano Kaydedici</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Editor">Editör Penceresi</s:String>
     
     <s:String x:Key="Application.ScreenRecorder">Ekran Kaydedici</s:String>
     <s:String x:Key="Application.ScreenRecorder.RecordMouse">Fare imlecini kayıtta göster.</s:String>
@@ -70,24 +71,23 @@
     <!--<s:String x:Key="Application.ScreenRecorder.AsyncRecording">Enable asynchronous recording.</s:String>-->
     <!--<s:String x:Key="Application.ScreenRecorder.AsyncRecording.Info">(It helps reduce the interface lag when recording)</s:String>-->
     
-    <s:String x:Key="Application.Shortcuts">Klavye Kısayolları</s:String>
-    <s:String x:Key="Application.Shortcuts.StartPause">Başlat/Duraklat:</s:String>
-    <s:String x:Key="Application.Shortcuts.Stop">Durdur:</s:String>
-
     <s:String x:Key="Application.Other">Diğer</s:String>
     <!--<s:String x:Key="Application.Other.CheckForUpdates">Check for updates.</s:String>-->
+    
+    <s:String x:Key="S.Shortcuts.Recorders.StartPause">Başlat/Duraklat:</s:String>
+    <s:String x:Key="S.Shortcuts.Recorders.Stop">Durdur:</s:String>
     
     <s:String x:Key="Interface.EditorBackground">Editör Arkaplanı</s:String>
     <!--<s:String x:Key="Interface.Recorder">Recorder theme</s:String>-->
     <!--<s:String x:Key="Interface.Background">Background</s:String>-->
     <!--<s:String x:Key="Interface.Foreground">Foreground</s:String>-->
     <s:String x:Key="Interface.BoardBackground">Pano Arkaplanı</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme">Renk Düzeni</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.VeryLight">Çok Açık</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Light">Açık</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Medium">Orta</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Dark">Koyu</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Custom">Özel</s:String>
+    <s:String x:Key="Interface.Theme.Scheme">Renk Düzeni</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.VeryLight">Çok Açık</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Light">Açık</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Medium">Orta</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Dark">Koyu</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Custom">Özel</s:String>
     
     <s:String x:Key="Interface.EditorBackground.GridSize">Izgara Boyutu</s:String>
     <s:String x:Key="Interface.EditorBackground.GridSize.VerySmall">Çok Küçük</s:String>
@@ -587,7 +587,7 @@
     <!--<s:String x:Key="OverrideDelay.Info">This new value will replace the duration (delay) of all selected frames. The value can be from 10ms to 25500ms.</s:String>-->
     <!--<s:String x:Key="IncreaseDecreaseDelay.Info">This value will decrease/increase the duration (delay) of each selected frame.&#x0d;You can decrement/increment by selecting a value between -10000ms and 10000ms, but the final duration of each frame will be restricted to between 10ms and 25500ms</s:String>-->
     
-    <s:String x:Key="Transitions.Lenght">Geçiş Süresi</s:String>
+    <s:String x:Key="Transitions.Length">Geçiş Süresi</s:String>
     <s:String x:Key="Transitions.FadeTo">Geçiş yap...</s:String>
     <s:String x:Key="Transitions.FadeTo.Frame">Sonraki Kare</s:String>
     <s:String x:Key="Transitions.FadeTo.Color">Tek renk</s:String>

@@ -1,37 +1,41 @@
 ﻿using System;
+using ScreenToGif.Model;
 
 namespace ScreenToGif.Util
 {
     internal static class Global
     {
+        internal static DateTime StartupDateTime { get; set; }
+
         /// <summary>
-        /// Helper method for generating a "pack://" URI for a given relative file based on the
-        /// assembly that this class is in.
+        /// When it's true, the global shortcuts won't work.
         /// </summary>
-        public static Uri MakePackUri(string relativeFile)
-        {
-            string uriString = "pack://application:,,,/" + AssemblyShortName + ";component/" + relativeFile;
-            return new Uri(uriString);
-        }
+        internal static bool IgnoreHotKeys { get; set; }
 
-        private static string AssemblyShortName
-        {
-            get
-            {
-                if (_assemblyShortName == null)
-                {
-                    var a = typeof(Global).Assembly;
+        /// <summary>
+        /// When it's true, the hotfix with the bug is installed.
+        /// https://github.com/dotnet/announcements/issues/53
+        /// </summary>
+        internal static bool IsHotFix4055002Installed { get; set; }
 
-                    // Pull out the short name.
-                    _assemblyShortName = a.ToString().Split(',')[0];
-                }
+        /// <summary>
+        /// When it's true, the app is currently deleting old projects.
+        /// </summary>
+        internal static bool IsCurrentlyDeletingFiles { get; set; }
 
-                return _assemblyShortName;
-            }
-        }
+        /// <summary>
+        /// The available space on the disk that currently holds the data, as percentage.
+        /// </summary>
+        internal static double AvailableDiskSpacePercentage { get; set; }
 
-        private static string _assemblyShortName;
+        /// <summary>
+        /// The available space on the disk that currently holds the data.
+        /// </summary>
+        internal static double AvailableDiskSpace { get; set; }
 
-        public static DateTime StartupDateTime { get; set; }
+        /// <summary>
+        /// Holds the details of the latest update available.
+        /// </summary>
+        internal static UpdateModel UpdateModel { get; set; }
     }
 }

@@ -135,12 +135,22 @@ namespace ScreenToGif.Util
 
         #endregion
 
-        #region Zoom100
+        #region Scale Delay
 
-        /// <summary>
-        /// Zoom100 Command, Alt + 0
-        /// </summary>
-        public static RoutedUICommand Zoom100 { get; set; } = new RoutedUICommand("Set Zoom to 100%", "Zoom100", typeof(Commands),
+         /// <summary>
+         /// ScaleDelay Command, Alt + 5
+         /// </summary>
+         public static RoutedUICommand ScaleDelay { get; set; } = new RoutedUICommand("Scale Delay", "ScaleDelay", typeof(Commands),
+               new InputGestureCollection { new KeyGesture(Key.D5, ModifierKeys.Alt, "Alt + 5") });
+
+        #endregion
+
+      #region Zoom100
+
+      /// <summary>
+      /// Zoom100 Command, Alt + 0
+      /// </summary>
+      public static RoutedUICommand Zoom100 { get; set; } = new RoutedUICommand("Set Zoom to 100%", "Zoom100", typeof(Commands),
             new InputGestureCollection { new KeyGesture(Key.D0, ModifierKeys.Alt, "Alt + 0") });
 
         #endregion
@@ -468,6 +478,26 @@ namespace ScreenToGif.Util
 
         #endregion
 
+        #region Shapes
+
+        /// <summary>
+        /// Shapes Command, Alt + J
+        /// </summary>
+        public static RoutedUICommand Shapes { get; set; } = new RoutedUICommand("Shapes", "Shapes", typeof(Commands),
+            new InputGestureCollection { new KeyGesture(Key.J, ModifierKeys.Alt, "Alt + J") });
+
+        #endregion
+
+        #region Mouse Clicks
+
+        /// <summary>
+        /// Mouse Clicks Command, Alt + I
+        /// </summary>
+        public static RoutedUICommand MouseClicks { get; set; } = new RoutedUICommand("Mouse Clicks", "MouseClicks", typeof(Commands),
+            new InputGestureCollection { new KeyGesture(Key.I, ModifierKeys.Alt, "Alt + I") });
+
+        #endregion
+
         #region Watermark
 
         /// <summary>
@@ -739,6 +769,40 @@ namespace ScreenToGif.Util
         /// </summary>
         public static RoutedUICommand RemoveLocalization { get; set; } = new RoutedUICommand("Remove Localization", "RemoveLocalization", typeof(Commands), 
             new InputGestureCollection {new KeyGesture(Key.Delete, ModifierKeys.None, "Delete") });
+
+        #endregion
+
+        #region List of entries
+
+        /// <summary>
+        /// Move Up Entry Command, Alt + Up
+        /// </summary>
+        public static RoutedUICommand MoveUp { get; set; } = new RoutedUICommand("Move Upwards", "MoveUp", typeof(Commands),
+            new InputGestureCollection { new KeyGesture(Key.Up, ModifierKeys.Alt, "Alt + Up") });
+
+        /// <summary>
+        /// Move Down Entry Command, Alt + Down
+        /// </summary>
+        public static RoutedUICommand MoveDown { get; set; } = new RoutedUICommand("Move Downwards", "MoveDown", typeof(Commands),
+            new InputGestureCollection { new KeyGesture(Key.Down, ModifierKeys.Alt, "Alt + Down") });
+
+        /// <summary>
+        /// Add Entry Command, Ctrl + N
+        /// </summary>
+        public static RoutedUICommand Add { get; set; } = new RoutedUICommand("Add", "AddNew", typeof(Commands),
+            new InputGestureCollection { new KeyGesture(Key.N, ModifierKeys.Control, "Ctrl + N") });
+
+        /// <summary>
+        /// Add Entry Command, Ctrl + E
+        /// </summary>
+        public static RoutedUICommand Edit { get; set; } = new RoutedUICommand("Edit", "Edit", typeof(Commands),
+            new InputGestureCollection { new KeyGesture(Key.E, ModifierKeys.Control, "Ctrl + E") });
+
+        /// <summary>
+        /// Remove Entry Command, Delete
+        /// </summary>
+        public static RoutedUICommand Remove { get; set; } = new RoutedUICommand("Remove", "Remove", typeof(Commands),
+            new InputGestureCollection { new KeyGesture(Key.Delete, ModifierKeys.None, "Delete") });
 
         #endregion
 

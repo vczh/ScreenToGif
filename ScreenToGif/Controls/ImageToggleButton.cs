@@ -13,8 +13,6 @@ namespace ScreenToGif.Controls
 
         public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(ImageToggleButton), new FrameworkPropertyMetadata("Button"));
 
-        public static readonly DependencyProperty MaxSizeProperty = DependencyProperty.Register("MaxSize", typeof(double), typeof(ImageToggleButton), new FrameworkPropertyMetadata(26.0));
-
         public static readonly DependencyProperty KeyGestureProperty = DependencyProperty.Register("KeyGesture", typeof(string), typeof(ImageToggleButton), new FrameworkPropertyMetadata(""));
 
         public static readonly DependencyProperty ContentHeightProperty = DependencyProperty.Register("ContentHeight", typeof(double), typeof(ImageToggleButton), new FrameworkPropertyMetadata(double.NaN));
@@ -26,6 +24,10 @@ namespace ScreenToGif.Controls
         /// </summary>
         public static readonly DependencyProperty TextWrappingProperty = DependencyProperty.Register("TextWrapping", typeof(TextWrapping), typeof(ImageToggleButton),
             new FrameworkPropertyMetadata(TextWrapping.NoWrap, FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender));
+
+        public static readonly DependencyProperty DarkModeProperty = DependencyProperty.Register("DarkMode", typeof(bool), typeof(ImageToggleButton), new FrameworkPropertyMetadata(false));
+
+        public static readonly DependencyProperty IsOverNonClientAreaProperty = DependencyProperty.Register("IsOverNonClientArea", typeof(bool), typeof(ImageToggleButton), new FrameworkPropertyMetadata(false));
 
         #endregion
 
@@ -39,16 +41,6 @@ namespace ScreenToGif.Controls
         {
             get => (string)GetValue(TextProperty);
             set => SetCurrentValue(TextProperty, value);
-        }
-
-        /// <summary>
-        /// The maximum size of the image.
-        /// </summary>
-        [Description("The maximum size of the image."), Category("Common")]
-        public double MaxSize
-        {
-            get => (double)GetValue(MaxSizeProperty);
-            set => SetCurrentValue(MaxSizeProperty, value);
         }
 
         /// <summary>
@@ -89,6 +81,26 @@ namespace ScreenToGif.Controls
         {
             get => (TextWrapping)GetValue(TextWrappingProperty);
             set => SetValue(TextWrappingProperty, value);
+        }
+
+        /// <summary>
+        /// True if the button should ajust itself for dark mode.
+        /// </summary>
+        [Description("True if the button should ajust itself for dark mode.")]
+        public bool DarkMode
+        {
+            get => (bool)GetValue(DarkModeProperty);
+            set => SetCurrentValue(DarkModeProperty, value);
+        }
+
+        /// <summary>
+        /// True if the button is being drawn on top of the non client area.
+        /// </summary>
+        [Description("True if the button is being drawn on top of the non client area.")]
+        public bool IsOverNonClientArea
+        {
+            get => (bool)GetValue(IsOverNonClientAreaProperty);
+            set => SetCurrentValue(IsOverNonClientAreaProperty, value);
         }
 
         #endregion

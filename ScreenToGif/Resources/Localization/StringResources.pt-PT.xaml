@@ -49,12 +49,12 @@
     <s:String x:Key="Donate">Doação</s:String>
     <s:String x:Key="About">Sobre</s:String>
     
-    <s:String x:Key="Application.Homepage">Página Inicial</s:String>
-    <s:String x:Key="Application.Homepage.StartUp">Janela de Início</s:String>
-    <s:String x:Key="Application.Homepage.Recorder">Gravador de Ecrã</s:String>
-    <s:String x:Key="Application.Homepage.Webcam">Gravador de Câmara</s:String>
-    <s:String x:Key="Application.Homepage.Board">Gravador de Tela</s:String>
-    <s:String x:Key="Application.Homepage.Editor">Janela do Editor</s:String>
+    <s:String x:Key="S.Application.Other.Homepage">Página Inicial:</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.StartUp">Janela de Início</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Recorder">Gravador de Ecrã</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Webcam">Gravador de Câmara</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Board">Gravador de Tela</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Editor">Janela do Editor</s:String>
     
     <s:String x:Key="Application.ScreenRecorder">Gravador de Ecrã</s:String>
     <s:String x:Key="Application.ScreenRecorder.RecordMouse">Mostar o cursor na gravação.</s:String>
@@ -69,10 +69,6 @@
     <s:String x:Key="Application.ScreenRecorder.FixedFramerate.Info">(Fotogramas constantes, não varia com atrasos da gravação)</s:String>
     <!--<s:String x:Key="Application.ScreenRecorder.AsyncRecording">Enable asynchronous recording.</s:String>-->
     <!--<s:String x:Key="Application.ScreenRecorder.AsyncRecording.Info">(It helps reduce the interface lag when recording)</s:String>-->
-    
-    <s:String x:Key="Application.Shortcuts">Atalhos de Teclado</s:String>
-    <s:String x:Key="Application.Shortcuts.StartPause">Gravar/Pausar:</s:String>
-    <s:String x:Key="Application.Shortcuts.Stop">Parar:</s:String>
 
     <s:String x:Key="Application.Other">Outras Definições</s:String>
     <!--<s:String x:Key="Application.Other.CheckForUpdates">Check for updates.</s:String>-->
@@ -82,12 +78,12 @@
     <!--<s:String x:Key="Interface.Background">Background</s:String>-->
     <!--<s:String x:Key="Interface.Foreground">Foreground</s:String>-->
     <!--<s:String x:Key="Interface.BoardBackground">Board background</s:String>-->
-    <s:String x:Key="Interface.EditorBackground.Scheme">Esquema de Cores</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.VeryLight">Muito Claro</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Light">Claro</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Medium">Médio</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Dark">Escuro</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Custom">Personalizado</s:String>
+    <s:String x:Key="Interface.Theme.Scheme">Esquema de Cores</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.VeryLight">Muito Claro</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Light">Claro</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Medium">Médio</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Dark">Escuro</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Custom">Personalizado</s:String>
     
     <s:String x:Key="Interface.EditorBackground.GridSize">Tamanho da Grelha</s:String>
     <s:String x:Key="Interface.EditorBackground.GridSize.VerySmall">Muito Pequeno</s:String>
@@ -111,6 +107,9 @@
     <!--<s:String x:Key="Interface.Other.HideTitleBar">Hide the title bar (thin mode).</s:String>-->
     <!--<s:String x:Key="Interface.Other.TripleClickSelection">Enable triple-click to select the text.</s:String>-->
   
+    <s:String x:Key="S.Shortcuts.Recorders.StartPause">Gravar/Pausar:</s:String>
+    <s:String x:Key="S.Shortcuts.Recorders.Stop">Parar:</s:String>
+    
     <s:String x:Key="Language.AppLanguage">Idioma da Aplicação</s:String>
     
     <s:String x:Key="TempFiles.FilesAndFolders">Ficheiros e Pastas Temporárias</s:String>
@@ -587,7 +586,7 @@
     <!--<s:String x:Key="OverrideDelay.Info">This new value will replace the duration (delay) of all selected frames. The value can be from 10ms to 25500ms.</s:String>-->
     <!--<s:String x:Key="IncreaseDecreaseDelay.Info">This value will decrease/increase the duration (delay) of each selected frame.&#x0d;You can decrement/increment by selecting a value between -10000ms and 10000ms, but the final duration of each frame will be restricted to between 10ms and 25500ms</s:String>-->
     
-    <s:String x:Key="Transitions.Lenght">Duração da Transição</s:String>
+    <s:String x:Key="Transitions.Length">Duração da Transição</s:String>
     <!--<s:String x:Key="Transitions.FadeTo">Fade To...</s:String>-->
     <!--<s:String x:Key="Transitions.FadeTo.Frame">The next frame</s:String>-->
     <!--<s:String x:Key="Transitions.FadeTo.Color">A color</s:String>-->

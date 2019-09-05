@@ -1,6 +1,17 @@
 ﻿namespace ScreenToGif.Util
 {
     /// <summary>
+    /// Determines the app's theme.
+    /// </summary>
+    public enum AppTheme
+    {
+        Light,
+        Medium,
+        Dark,
+        VeryDark,
+    }
+
+    /// <summary>
     /// Determines how the past bahaves.
     /// </summary>
     public enum PasteBehavior
@@ -44,7 +55,12 @@
         /// <summary>
         /// Project file, .stg or .zip.
         /// </summary>
-        Project
+        Project,
+
+        /// <summary>
+        /// PSD file.
+        /// </summary>
+        Photoshop,
     }
 
     /// <summary>
@@ -88,30 +104,37 @@
         /// </summary>
         IncreaseDecreaseDelay = 7,
 
+        ScaleDelay = 8,
+
         /// <summary>
         /// Fade Transition Panel.
         /// </summary>
-        Fade = 8,
+        Fade = 9,
 
         /// <summary>
         /// Slide Transition Panel.
         /// </summary>
-        Slide = 9,
+        Slide = 10,
 
         /// <summary>
         /// Reduce Frame Count Panel.
         /// </summary>
-        ReduceFrames = 10,
+        ReduceFrames = 11,
 
         /// <summary>
         /// Load Recent Panel.
         /// </summary>
-        LoadRecent = 11,
+        LoadRecent = 12,
 
         /// <summary>
         /// Remove Duplicates Panel.
         /// </summary>
-        RemoveDuplicates = 12,
+        RemoveDuplicates = 13,
+
+        /// <summary>
+        /// Mouse Clicks Panel.
+        /// </summary>
+        MouseClicks = 14,
 
         /// <summary>
         /// Crop Panel.
@@ -139,34 +162,39 @@
         FreeDrawing = -5,
 
         /// <summary>
+        /// Shapes Panel.
+        /// </summary>
+        Shapes = -6,
+
+        /// <summary>
         /// Watermark Panel.
         /// </summary>
-        Watermark = -6,
+        Watermark = -7,
 
         /// <summary>
         /// Border Panel.
         /// </summary>
-        Border = -7,
+        Border = -8,
 
         /// <summary>
         /// Cinemagraph Panel.
         /// </summary>
-        Cinemagraph = -8,
+        Cinemagraph = -9,
 
         /// <summary>
         /// Progress Panel.
         /// </summary>
-        Progress = -9,
+        Progress = -10,
 
         /// <summary>
         /// Key Strokes Panel.
         /// </summary>
-        KeyStrokes = -10,
+        KeyStrokes = -11,
 
         /// <summary>
         /// Obfuscate Panel.
         /// </summary>
-        Obfuscate = -11,
+        Obfuscate = -12,
     }
 
     /// <summary>
@@ -306,8 +334,9 @@
     public enum DelayChangeType
     {
         Override,
-        IncreaseDecrease
-    }
+        IncreaseDecrease,
+      Scale
+   }
 
     /// <summary>
     /// Type of the gif encoder.
@@ -319,6 +348,15 @@
         PaintNet,
         FFmpeg,
         Gifski
+    }
+
+    /// <summary>
+    /// Type of the apng encoder.
+    /// </summary>
+    public enum ApngEncoderType
+    {
+        ScreenToGif,
+        FFmpeg,
     }
 
     /// <summary>
@@ -439,5 +477,123 @@
         DontAdjust = 0,
         Average = 1,
         Sum = 2
+    }
+
+    /// <summary>
+    /// Event flags for mouse-related events.
+    /// </summary>
+    public enum MouseEventType
+    {
+        MouseMove,
+        IconRightMouseDown,
+        IconLeftMouseDown,
+        IconRightMouseUp,
+        IconLeftMouseUp,
+        IconMiddleMouseDown,
+        IconMiddleMouseUp,
+        IconDoubleClick
+    }
+
+
+    /// <summary>
+    /// Dialog Icons.
+    /// </summary>
+    public enum Icons
+    {
+        /// <summary>
+        /// Information. Blue.
+        /// </summary>
+        Info,
+
+        /// <summary>
+        /// Warning, yellow.
+        /// </summary>
+        Warning,
+
+        /// <summary>
+        /// Error, red.
+        /// </summary>
+        Error,
+
+        /// <summary>
+        /// Success, green.
+        /// </summary>
+        Success,
+
+        /// <summary>
+        /// A question mark, blue.
+        /// </summary>
+        Question,
+    }
+
+    /// <summary>
+    /// The proxy method, used for uploading files.
+    /// </summary>
+    public enum ProxyType
+    {
+        Disabled = 0,
+        Manual = 1,
+        System = 2
+    }
+
+    /// <summary>
+    /// The upload service.
+    /// </summary>
+    public enum UploadService
+    {
+        None = 0,
+        ImgurAnonymous = 1,
+        Imgur = 2,
+        GyfcatAnonymous = 3,
+        Gyfcat = 4,
+        Yandex = 5,
+    }
+
+    public enum StatusType : int
+    {
+        None = 0,
+        Info,
+        Update,
+        Warning,
+        Error
+    }
+
+    /// <summary>
+    /// The types of source of project creation.
+    /// </summary>
+    public enum ProjectByType
+    {
+        Unknown = 0,
+        ScreenRecorder = 1,
+        WebcamRecorder = 2,
+        BoardRecorder = 3,
+        Editor = 4,
+    }
+
+    /// <summary>
+    /// The types of drawings.
+    /// </summary>
+    public enum DrawingModeType
+    {
+        None = 0,
+        Ink,
+        Select,
+        EraseByPoint,
+        EraseByObject,
+        Rectangle,
+        Circle,
+        Triangle,
+        Arrow,
+        Baloon,
+    }
+
+    /// <summary>
+    /// Delay update type.
+    /// </summary>
+    public enum DelayUpdateType
+    {
+        Override = 0,
+        IncreaseDecrease = 1,
+        Scale = 2,
     }
 }

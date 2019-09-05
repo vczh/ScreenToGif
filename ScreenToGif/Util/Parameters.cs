@@ -18,7 +18,7 @@ namespace ScreenToGif.Util
 
         public bool Upload { get; set; }
 
-        public int UploadDestinationIndex { get; set; }
+        public UploadService UploadDestination { get; set; }
 
         public bool ExecuteCommands { get; set; }
 
@@ -49,6 +49,12 @@ namespace ScreenToGif.Util
 
         #endregion
 
+        #region Apng
+
+        public ApngEncoderType ApngEncoder { get; set; }
+
+        #endregion
+
         #region Video
 
         public VideoEncoderType VideoEncoder { get; set; }
@@ -68,6 +74,14 @@ namespace ScreenToGif.Util
         public bool FlipVideo { get; set; }
 
         public int Framerate { get; set; }
+
+        #endregion
+
+        #region Psd
+
+        public bool Compress { get; set; }
+
+        public bool SaveTimeline { get; set; }
 
         #endregion
     }

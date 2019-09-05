@@ -41,6 +41,7 @@
     <!--Options Page-->
     <s:String x:Key="Title.Options">Screen To Gif - Alternativ</s:String>
     <s:String x:Key="Application">Tillämpningar</s:String>
+    <s:String x:Key="S.Shortcuts">Snabbkommando</s:String>
     <s:String x:Key="Interface">Gränssnitt</s:String>
     <s:String x:Key="Image">Bild</s:String>
     <s:String x:Key="Language">Språk</s:String>
@@ -49,12 +50,12 @@
     <s:String x:Key="Donate">Donera</s:String>
     <s:String x:Key="About">Om</s:String>
     
-    <s:String x:Key="Application.Homepage">Öppningsfönster</s:String>
-    <s:String x:Key="Application.Homepage.StartUp">Flerval fönster (Standard)</s:String>
-    <s:String x:Key="Application.Homepage.Recorder">Skärm inspelning</s:String>
-    <s:String x:Key="Application.Homepage.Webcam">Webbkamera inspelning</s:String>
-    <s:String x:Key="Application.Homepage.Board">Notis inspelning</s:String>
-    <s:String x:Key="Application.Homepage.Editor">Redigerings fönster</s:String>
+    <s:String x:Key="S.Application.Other.Homepage">Öppningsfönster:</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.StartUp">Flerval fönster (Standard)</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Recorder">Skärm inspelning</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Webcam">Webbkamera inspelning</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Board">Notis inspelning</s:String>
+    <s:String x:Key="S.Application.Other.Homepage.Editor">Redigerings fönster</s:String>
     
     <s:String x:Key="Application.ScreenRecorder">Skärm inspelning</s:String>
     <s:String x:Key="Application.ScreenRecorder.RecordMouse">Visa muspekaren i inspelningen.</s:String>
@@ -70,10 +71,6 @@
     <s:String x:Key="Application.ScreenRecorder.AsyncRecording">Aktivera osynkroniserad inspelning</s:String>
     <s:String x:Key="Application.ScreenRecorder.AsyncRecording.Info">(Hjälper mot interface störningar vid inspelning)</s:String>
     
-    <s:String x:Key="Application.Shortcuts">Snabbkommando</s:String>
-    <s:String x:Key="Application.Shortcuts.StartPause">Start/Paus:</s:String>
-    <s:String x:Key="Application.Shortcuts.Stop">Avbryt:</s:String>
-
     <s:String x:Key="Application.Other">Andra</s:String>
     <s:String x:Key="Application.Other.CheckForUpdates">Kolla efter uppdateringar.</s:String>
     
@@ -82,12 +79,12 @@
     <s:String x:Key="Interface.Background">Bakgrund</s:String>
     <s:String x:Key="Interface.Foreground">Förgrund</s:String>
     <s:String x:Key="Interface.BoardBackground">Notis Baakgrund</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme">Färg schema</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.VeryLight">Mycket Ljus</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Light">Ljus</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Medium">Medium</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Dark">Mörk</s:String>
-    <s:String x:Key="Interface.EditorBackground.Scheme.Custom">Egen</s:String>
+    <s:String x:Key="Interface.Theme.Scheme">Färg schema</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.VeryLight">Mycket Ljus</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Light">Ljus</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Medium">Medium</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Dark">Mörk</s:String>
+    <s:String x:Key="Interface.Theme.Scheme.Custom">Egen</s:String>
     
     <s:String x:Key="Interface.EditorBackground.GridSize">Rutnätsstorlek</s:String>
     <s:String x:Key="Interface.EditorBackground.GridSize.VerySmall">Väldigt liten</s:String>
@@ -111,6 +108,9 @@
     <s:String x:Key="Interface.Other.HideTitleBar">Göm fönstrets titel (enkel läge).</s:String>
     <s:String x:Key="Interface.Other.TripleClickSelection">Aktivera trippel klickför att välja text.</s:String>
   
+    <s:String x:Key="S.Shortcuts.Recorders.StartPause">Start/Paus:</s:String>
+    <s:String x:Key="S.Shortcuts.Recorders.Stop">Avbryt:</s:String>
+
     <s:String x:Key="Language.AppLanguage">Applikations språk</s:String>
     
     <s:String x:Key="TempFiles.FilesAndFolders">Temporära filer och mappar</s:String>
@@ -589,7 +589,7 @@
     <s:String x:Key="OverrideDelay.Info">Detta nya värde kommer att ersätta varaktighet (fördröjning) av alla valda ramar. Värdet kan vara från 10 ms till 25500ms.</s:String>
     <s:String x:Key="IncreaseDecreaseDelay.Info">Detta värde kommer att minska / öka varaktigheten (fördröjning) av varje vald ram. Du kan stega / ökning genom att välja ett värde mellan -10000ms och 10000ms, men den slutliga längden på varje ram kommer att begränsas till mellan 10ms och 25500ms</s:String>
     
-    <s:String x:Key="Transitions.Lenght">Övergångs längd</s:String>
+    <s:String x:Key="Transitions.Length">Övergångs längd</s:String>
     <s:String x:Key="Transitions.FadeTo">Blekna till...</s:String>
     <s:String x:Key="Transitions.FadeTo.Frame">Nästa bildruta</s:String>
     <s:String x:Key="Transitions.FadeTo.Color">En färg</s:String>

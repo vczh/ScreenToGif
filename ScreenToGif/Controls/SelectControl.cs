@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -79,6 +78,16 @@ namespace ScreenToGif.Controls
         /// </summary>
         private readonly List<Rect> _blindSpots = new List<Rect>();
 
+        /// <summary>
+        /// The latest window that contains the mouse cursor on top of it.
+        /// </summary>
+        private DetectedRegion _hitTestWindow;
+
+        /// <summary>
+        /// True when this control is ready to process mouse input when using the Screen/Window selection mode.
+        /// This was added because the event MouseMove was being fired before the method that adjusts the other controls finished. (TL;DR It was a race condition)
+        /// </summary>
+        private bool _ready;
 
         public enum ModeType
         {
@@ -242,12 +251,14 @@ namespace ScreenToGif.Controls
             _retryButton.Click += (sender, e) => { Retry(); };
             _cancelButton.Click += (sender, e) => { Cancel(); };
 
-            Monitors = Monitor.AllMonitorsScaled(Scale);
+            Monitors = Monitor.AllMonitorsScaled(Scale, true);
         }
 
         private void SystemEvents_DisplaySettingsChanged(object o, EventArgs eventArgs)
         {
-            Monitors = Monitor.AllMonitorsScaled(Scale);
+            Scale = this.Scale();
+
+            Monitors = Monitor.AllMonitorsScaled(Scale, true);
 
             //TODO: Adjust the selection and the UI when this happens.
         }
@@ -269,6 +280,9 @@ namespace ScreenToGif.Controls
             }
             else
             {
+                if (Mode == ModeType.Window && _hitTestWindow != null)
+                    Native.SetForegroundWindow(_hitTestWindow.Handle);
+
                 if (Selected.Width > 0 && Selected.Height > 0)
                     RaiseAcceptedEvent();
             }
@@ -313,11 +327,12 @@ namespace ScreenToGif.Controls
 
                 AdjustInfo(current);
             }
-            else
+            else if (_ready)
             {
                 var current = e.GetPosition(this);
 
-                Selected = Windows.FirstOrDefault(x => x.Bounds.Contains(current))?.Bounds ?? Rect.Empty;
+                _hitTestWindow = Windows.FirstOrDefault(x => x.Bounds.Contains(current));
+                Selected = _hitTestWindow?.Bounds ?? Rect.Empty;
 
                 AdjustInfo(current);
             }
@@ -359,8 +374,88 @@ namespace ScreenToGif.Controls
                 Accept();
 
             e.Handled = true;
-
             base.OnPreviewKeyDown(e);
+
+            if (Mode != ModeType.Region || Selected.IsEmpty)
+                return;
+
+            //Control + Shift: Expand both ways.
+            if ((Keyboard.Modifiers & ModifierKeys.Control) != 0 && (Keyboard.Modifiers & ModifierKeys.Shift) != 0)
+            {
+                switch (e.Key)
+                {
+                    case Key.Up:
+                        HandleBottom(_bottom, new DragDeltaEventArgs(0, 1));
+                        HandleTop(_top, new DragDeltaEventArgs(0, -1));
+                        break;
+                    case Key.Down:
+                        HandleBottom(_bottom, new DragDeltaEventArgs(0, -1));
+                        HandleTop(_top, new DragDeltaEventArgs(0, 1));
+                        break;
+                    case Key.Left:
+                        HandleRight(_right, new DragDeltaEventArgs(-1, 0));
+                        HandleLeft(_left, new DragDeltaEventArgs(1, 0));
+                        break;
+                    case Key.Right:
+                        HandleRight(_right, new DragDeltaEventArgs(1, 0));
+                        HandleLeft(_left, new DragDeltaEventArgs(-1, 0));
+                        break;
+                }
+            }
+            else if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0) //If the Shift key is pressed, the sizing mode is enabled (bottom right).
+            {
+                switch (e.Key)
+                {
+                    case Key.Up:
+                        HandleBottom(_bottom, new DragDeltaEventArgs(0, -1));
+                        break;
+                    case Key.Down:
+                        HandleBottom(_bottom, new DragDeltaEventArgs(0, 1));
+                        break;
+                    case Key.Left:
+                        HandleRight(_right, new DragDeltaEventArgs(-1, 0));
+                        break;
+                    case Key.Right:
+                        HandleRight(_right, new DragDeltaEventArgs(1, 0));
+                        break;
+                }
+            }
+            else if ((Keyboard.Modifiers & ModifierKeys.Control) != 0) //If the Control key is pressed, the sizing mode is enabled (top left).
+            {
+                switch (e.Key)
+                {
+                    case Key.Up:
+                        HandleTop(_top, new DragDeltaEventArgs(0, -1));
+                        break;
+                    case Key.Down:
+                        HandleTop(_top, new DragDeltaEventArgs(0, 1));
+                        break;
+                    case Key.Left:
+                        HandleLeft(_left, new DragDeltaEventArgs(-1, 0));
+                        break;
+                    case Key.Right:
+                        HandleLeft(_left, new DragDeltaEventArgs(1, 0));
+                        break;
+                }
+            }
+            else
+            {
+                switch (e.Key) //If no other key is pressed, the movement mode is enabled.
+                {
+                    case Key.Up:
+                        HandleCenter(new DragDeltaEventArgs(0, -1));
+                        break;
+                    case Key.Down:
+                        HandleCenter(new DragDeltaEventArgs(0, 1));
+                        break;
+                    case Key.Left:
+                        HandleCenter(new DragDeltaEventArgs(-1, 0));
+                        break;
+                    case Key.Right:
+                        HandleCenter(new DragDeltaEventArgs(1, 0));
+                        break;
+                }
+            }
         }
 
         #endregion
@@ -459,7 +554,7 @@ namespace ScreenToGif.Controls
             Canvas.SetLeft(_zoomGrid, left);
             Canvas.SetTop(_zoomGrid, top);
 
-            _zoomTextBlock.Text = $"X: {scaledPoint.X} ◇ Y: {scaledPoint.Y}";
+            _zoomTextBlock.Text = $"X: {scaledPoint.X + SystemParameters.VirtualScreenLeft} ◇ Y: {scaledPoint.Y + SystemParameters.VirtualScreenTop}";
 
             _zoomGrid.Visibility = Visibility.Visible;
         }
@@ -481,7 +576,16 @@ namespace ScreenToGif.Controls
             if (!point.HasValue)
                 return;
 
-            var monitor = Monitors.FirstOrDefault(x => x.Bounds.Contains(point.Value));
+            //If the main monitor is not the most left / top one, the bounds of monitors left to / above the main monitor are negative,
+            //But the cursor point is always starting from 0,0
+            //So, the cursor point may not fall into any monitor bounds (exceed the maximum right / bottom coordinate)
+            //As a result, convert the cursor point into the same axis of monitors by plusing the negative left / top coordinate
+            //double minimumMonitorTop = Monitors.Min(x => x.Bounds.Top);
+            //double minimumMonitorLeft = Monitors.Min(x => x.Bounds.Left);
+
+            var absolutePoint = new Point(point.Value.X, point.Value.Y);
+
+            var monitor = Monitors.FirstOrDefault(x => x.Bounds.Contains(absolutePoint));
 
             if (monitor == null)
                 return;
@@ -697,7 +801,7 @@ namespace ScreenToGif.Controls
             if (Selected.IsEmpty)// || !FinishedSelection)
             {
                 foreach (var monitor in Monitors)
-                    _blindSpots.Add(new Rect(new Point(monitor.Bounds.Right - 40, 0), new Size(40, 40)));
+                    _blindSpots.Add(new Rect(new Point(monitor.Bounds.Right - 40, monitor.Bounds.Top), new Size(40, 40)));
 
                 return;
             }
@@ -759,7 +863,7 @@ namespace ScreenToGif.Controls
             if (Mode == ModeType.Window)
                 Windows = Native.EnumerateWindows(Scale).AdjustPosition(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop);
             else if (Mode == ModeType.Fullscreen)
-                Windows = Monitor.AllMonitorsScaled(Scale).Select(x => new DetectedRegion(x.Handle, x.Bounds.Offset(-1), x.Name)).ToList().AdjustPosition(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop);
+                Windows = Monitor.AllMonitorsScaled(Scale, true).Select(x => new DetectedRegion(x.Handle, x.Bounds.Offset(-1), x.Name)).ToList();
             else
                 Windows.Clear();
         }
@@ -785,6 +889,10 @@ namespace ScreenToGif.Controls
 
         public void OnLoaded(object o, RoutedEventArgs routedEventArgs)
         {
+            _ready = false;
+
+            Keyboard.Focus(this);
+
             _blindSpots.Clear();
 
             if (EmbeddedMode)
@@ -801,7 +909,7 @@ namespace ScreenToGif.Controls
                     Child = new TextPath
                     {
                         IsHitTestVisible = false,
-                        Text = this.TextResource("S.Recorder.SelectArea"),
+                        Text = LocalizationHelper.Get("S.Recorder.SelectArea.Embedded"),
                         Fill = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
                         Stroke = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)),
                         StrokeThickness = 1.6,
@@ -841,7 +949,7 @@ namespace ScreenToGif.Controls
                     Height = 40,
                     ContentHeight = 25,
                     ContentWidth = 25,
-                    ToolTip = this.TextResource("S.Recorder.CancelSelection"),
+                    ToolTip = LocalizationHelper.Get("S.Recorder.CancelSelection"),
                     Content = TryFindResource("Vector.Cancel") as Canvas,
                     Style = TryFindResource("Style.Button.NoText.White") as Style,
                     Cursor = Cursors.Arrow,
@@ -856,7 +964,7 @@ namespace ScreenToGif.Controls
                 Canvas.SetTop(button, monitor.Bounds.Top);
                 Panel.SetZIndex(button, 8);
 
-                _blindSpots.Add(new Rect(new Point(monitor.Bounds.Right - 40, 0), new Size(40, 40)));
+                _blindSpots.Add(new Rect(new Point(monitor.Bounds.Right - 40, monitor.Bounds.Top), new Size(40, 40)));
             }
 
             #endregion
@@ -875,7 +983,7 @@ namespace ScreenToGif.Controls
                         Child = new TextPath
                         {
                             IsHitTestVisible = false,
-                            Text = "👆 " + this.TextResource("S.Recorder.SelectScreen"),
+                            Text = "👆 " + LocalizationHelper.Get("S.Recorder.SelectScreen"),
                             Fill = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
                             Stroke = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)),
                             StrokeThickness = 1.6,
@@ -912,7 +1020,7 @@ namespace ScreenToGif.Controls
                             Child = new TextPath
                             {
                                 IsHitTestVisible = false,
-                                Text = window.Bounds.Width < 400 || window.Bounds.Height < 100 ? "👆" : "👆 " + this.TextResource("S.Recorder.SelectWindow"),
+                                Text = window.Bounds.Width < 400 || window.Bounds.Height < 100 ? "👆" : "👆 " + LocalizationHelper.Get("S.Recorder.SelectWindow"),
                                 Fill = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
                                 Stroke = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)),
                                 StrokeThickness = 1.6,
@@ -939,7 +1047,7 @@ namespace ScreenToGif.Controls
                         Child = new TextPath
                         {
                             IsHitTestVisible = false,
-                            Text = window.Bounds.Width < 400 || window.Bounds.Height < 100 ? "👆" : "👆 " + this.TextResource("S.Recorder.SelectWindow"),
+                            Text = window.Bounds.Width < 400 || window.Bounds.Height < 100 ? "👆" : "👆 " + LocalizationHelper.Get("S.Recorder.SelectWindow"),
                             Fill = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
                             Stroke = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)),
                             StrokeThickness = 1.6,
@@ -1016,7 +1124,7 @@ namespace ScreenToGif.Controls
                         Child = new TextPath
                         {
                             IsHitTestVisible = false,
-                            Text = this.TextResource("S.Recorder.SelectArea"),
+                            Text = LocalizationHelper.Get("S.Recorder.SelectArea"),
                             Fill = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
                             Stroke = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)),
                             StrokeThickness = 1.6,
@@ -1039,10 +1147,14 @@ namespace ScreenToGif.Controls
             }
 
             AdjustSelection();
+
+            _ready = true;
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
+            SystemEvents.DisplaySettingsChanged -= SystemEvents_DisplaySettingsChanged;
+
             if (_mainCanvas == null)
                 return;
 
@@ -1059,7 +1171,10 @@ namespace ScreenToGif.Controls
 
             var rounded = Other.RoundUpValue(control.Scale);
 
-            if (control.Selected.IsEmpty || control.Selected.Width <= control.Scale * 2 || control.Selected.Height <= control.Scale * 2)
+            var width = Math.Round(control.Selected.Size.Width * control.Scale, MidpointRounding.AwayFromZero) - rounded * 2;
+            var height = Math.Round(control.Selected.Size.Height * control.Scale, MidpointRounding.AwayFromZero) - rounded * 2;
+
+            if (control.Selected.IsEmpty || height <= 0 || width <= 0)
             {
                 control.NonExpandedSelection = control.Selected;
                 return;
@@ -1097,7 +1212,7 @@ namespace ScreenToGif.Controls
         {
             if (Mode != ModeType.Region || !_rectangle.IsMouseCaptured || e.LeftButton != MouseButtonState.Pressed) return;
 
-            //A quick double quick will fire this event, whe it should fire the OnMouseLeftButtonUp.
+            //A quick double click will fire this event, when it should fire the OnMouseLeftButtonUp.
             if (Selected.IsEmpty || Selected.Width < 10 || Selected.Height < 10)
                 return;
 
@@ -1388,6 +1503,41 @@ namespace ScreenToGif.Controls
                 height = ActualHeight - Selected.Top;
 
             Selected = new Rect(Selected.Left, Selected.Top, Selected.Width, height);
+
+            var point = Mouse.GetPosition(this);
+
+            AdjustThumbs();
+            AdjustStatusControls(point);
+            DetectBlindSpots();
+            AdjustInfo(point);
+        }
+
+        /// <summary>
+        /// Handler for moving the selection.
+        /// </summary>
+        private void HandleCenter(DragDeltaEventArgs e)
+        {
+            e.Handled = true;
+
+            var sel = new Rect(Selected.Left + e.HorizontalChange, Selected.Top + e.VerticalChange, Selected.Width, Selected.Height);
+
+            #region Limit the drag to inside the bounds
+
+            if (sel.Left < 0)
+                sel.X = 0;
+
+            if (sel.Top < 0)
+                sel.Y = 0;
+
+            if (sel.Right > ActualWidth)
+                sel.X = ActualWidth - sel.Width;
+
+            if (sel.Bottom > ActualHeight)
+                sel.Y = ActualHeight - sel.Height;
+
+            #endregion
+
+            Selected = new Rect(sel.Left, sel.Top, sel.Width, sel.Height);
 
             var point = Mouse.GetPosition(this);
 

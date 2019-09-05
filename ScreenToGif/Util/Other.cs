@@ -8,8 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
-using ScreenToGif.FileWriters;
-using ScreenToGif.Util.Model;
+using ScreenToGif.Model;
 
 namespace ScreenToGif.Util
 {
@@ -18,6 +17,47 @@ namespace ScreenToGif.Util
     /// </summary>
     public static class Other
     {
+        private static string _assemblyShortName;
+
+        /// <summary>
+        /// Helper method for generating a "pack://" URI for a given relative file based on the
+        /// assembly that this class is in.
+        /// </summary>
+        public static Uri MakePackUri(string relativeFile)
+        {
+            var uriString = "pack://application:,,,/" + AssemblyShortName + ";component/" + relativeFile;
+            return new Uri(uriString);
+        }
+
+        private static string AssemblyShortName
+        {
+            get
+            {
+                if (_assemblyShortName != null)
+                    return _assemblyShortName;
+
+                var a = typeof(Global).Assembly;
+
+                //Pull out the short name.
+                _assemblyShortName = a.ToString().Split(',')[0];
+
+                return _assemblyShortName;
+            }
+        }
+
+        internal static string ToStringShort(this Version version)
+        {
+            var result = $"{version.Major}.{version.Minor}";
+
+            if (version.Build > 0)
+                result += $".{version.Build}";
+
+            if (version.Revision > 0)
+                result += $".{version.Revision}";
+
+            return result;
+        }
+
         public static Point TransformToScreen(Point point, Visual relativeTo)
         {
             var hwndSource = PresentationSource.FromVisual(relativeTo) as HwndSource;
@@ -100,6 +140,14 @@ namespace ScreenToGif.Util
             }
 
             return result;
+        }
+
+        public static string Truncate(this string text, int size)
+        {
+            if (string.IsNullOrEmpty(text))
+                return string.Empty;
+
+            return text.Length <= size ? text : text.Substring(0, size);
         }
 
         /// <summary>
@@ -187,6 +235,16 @@ namespace ScreenToGif.Util
         }
 
         /// <summary>
+        /// Gets the DPI of the system.
+        /// </summary>
+        /// <returns>The DPI of the system.</returns>
+        public static double DpiOfSystem()
+        {
+            using (var source = new HwndSource(new HwndSourceParameters()))
+                return 96d * (source.CompositionTarget?.TransformToDevice.M11 ?? 1D);
+        }
+
+        /// <summary>
         /// Gets the scale of the current window.
         /// </summary>
         /// <param name="window">The Window.</param>
@@ -201,10 +259,20 @@ namespace ScreenToGif.Util
             return 1d;
         }
 
+        /// <summary>
+        /// Gets the scale of the system.
+        /// </summary>
+        /// <returns>The scale of the system.</returns>
+        public static double ScaleOfSystem()
+        {
+            using (var source = new HwndSource(new HwndSourceParameters()))
+                return source.CompositionTarget?.TransformToDevice.M11 ?? 1D;
+        }
+
         public static string Remove(this string text, params string[] keys)
         {
             if (text == null)
-                throw new ArgumentNullException("text", "The text should not be null.");
+                throw new ArgumentNullException(nameof(text), "The text should not be null.");
 
             foreach (var key in keys)
                 text = text.Replace(key, string.Empty);
@@ -228,6 +296,7 @@ namespace ScreenToGif.Util
             return list;
         }
 
+        [Obsolete("Use LocalizationHelper.Get() instead")]
         public static string TextResource(this FrameworkElement visual, string key, string defaultValue = "")
         {
             return visual.TryFindResource(key) as string ?? defaultValue;
@@ -268,7 +337,7 @@ namespace ScreenToGif.Util
                 return (percentage.Value * 100d) / variable.Value;
 
             if (!percentage.HasValue && total.HasValue && variable.HasValue)
-                return (variable.Value * 100d) / total.Value;
+                return total > 0 || total < 0 ? (variable.Value * 100d) / total.Value : 0;
 
             if (!variable.HasValue && total.HasValue && percentage.HasValue)
                 return (percentage.Value * total.Value) / 100d;
@@ -280,8 +349,7 @@ namespace ScreenToGif.Util
 
         public static List<FrameInfo> CopyList(this List<FrameInfo> target)
         {
-            return new List<FrameInfo>(target.Select(item => new FrameInfo(item.Path, item.Delay,
-                new List<SimpleKeyGesture>(item.KeyList.Select(y => new SimpleKeyGesture(y.Key, y.Modifiers, y.IsUppercase))), item.Index)));
+            return new List<FrameInfo>(target.Select(s => new FrameInfo(s.Path, s.Delay, s.CursorX, s.CursorY, s.WasClicked, new List<SimpleKeyGesture>(s.KeyList.Select(y => new SimpleKeyGesture(y.Key, y.Modifiers, y.IsUppercase))), s.Index)));
         }
 
         /// <summary>
@@ -381,9 +449,7 @@ namespace ScreenToGif.Util
 
                 File.Copy(frame.Path, newPath);
 
-                var newFrame = new FrameInfo(newPath, frame.Delay, frame.KeyList);
-
-                list.Add(newFrame);
+                list.Add(new FrameInfo(newPath, frame.Delay, frame.CursorX, frame.CursorY, frame.WasClicked, frame.KeyList, frame.Index));
             }
 
             return list;
@@ -464,22 +530,34 @@ namespace ScreenToGif.Util
 
         #region Dependencies
 
-        public static bool IsFfmpegPresent()
+        public static bool IsFfmpegPresent(bool ignoreEnvironment = false)
         {
+            var realPath = UserSettings.All.FfmpegLocation;
+
+            //If the path is relative, File.Exists() was returning C:\\Windows\\System32\ffmpeg.exe when the app was lauched from the "Open with" context menu.
+            //So, in order to get the correct location, I need to combine the current base directory with the relative path.
+            if (!string.IsNullOrWhiteSpace(UserSettings.All.FfmpegLocation) && !Path.IsPathRooted(UserSettings.All.FfmpegLocation))
+                realPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, UserSettings.All.FfmpegLocation.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar));
+
             //File location already choosen or detected.
-            if (!string.IsNullOrWhiteSpace(UserSettings.All.FfmpegLocation) && File.Exists(UserSettings.All.FfmpegLocation))
+            if (!string.IsNullOrWhiteSpace(realPath) && File.Exists(realPath))
                 return true;
+
+            //If not found by direct/relative path, ignore the environment variables.
+            if (ignoreEnvironment)
+                return false;
 
             #region Check Environment Variables
 
             var variable = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine) + ";" +
                 Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User);
 
-            foreach (var path in variable.Split(';'))
+            foreach (var path in variable.Split(';').Where(w => !string.IsNullOrWhiteSpace(w)))
             {
                 try
                 {
-                    if (!File.Exists(Path.Combine(path, "ffmpeg.exe"))) continue;
+                    if (!File.Exists(Path.Combine(path, "ffmpeg.exe")))
+                        continue;
                 }
                 catch (Exception ex)
                 {
@@ -496,22 +574,34 @@ namespace ScreenToGif.Util
             return false;
         }
 
-        public static bool IsGifskiPresent()
+        public static bool IsGifskiPresent(bool ignoreEnvironment = false)
         {
+            var realPath = UserSettings.All.GifskiLocation;
+
+            //If the path is relative, File.Exists() was returning C:\\Windows\\System32\Gifski.dll when the app was lauched from the "Open with" context menu.
+            //So, in order to get the correct location, I need to combine the current base directory with the relative path.
+            if (!string.IsNullOrWhiteSpace(UserSettings.All.GifskiLocation) && !Path.IsPathRooted(UserSettings.All.GifskiLocation))
+                realPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, UserSettings.All.GifskiLocation.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar));
+
             //File location already choosen or detected.
-            if (!string.IsNullOrWhiteSpace(UserSettings.All.GifskiLocation) && File.Exists(UserSettings.All.GifskiLocation))
+            if (!string.IsNullOrWhiteSpace(realPath) && File.Exists(realPath))
                 return true;
+
+            //If not found by direct/relative path, ignore the environment variables.
+            if (ignoreEnvironment)
+                return false;
 
             #region Check Environment Variables
 
             var variable = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine) + ";" +
                 Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User);
 
-            foreach (var path in variable.Split(';'))
+            foreach (var path in variable.Split(';').Where(w => !string.IsNullOrWhiteSpace(w)))
             {
                 try
                 {
-                    if (!File.Exists(Path.Combine(path, "gifski.dll"))) continue;
+                    if (!File.Exists(Path.Combine(path, "gifski.dll")))
+                        continue;
                 }
                 catch (Exception ex)
                 {

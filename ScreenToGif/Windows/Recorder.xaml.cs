@@ -12,9 +12,9 @@ using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
+using ScreenToGif.Model;
 using ScreenToGif.Util;
 using ScreenToGif.Util.ActivityHook;
-using ScreenToGif.Util.Model;
 using ScreenToGif.Windows.Other;
 using Cursors = System.Windows.Input.Cursors;
 using Monitor = ScreenToGif.Util.Monitor;
@@ -43,11 +43,6 @@ namespace ScreenToGif.Windows
         private readonly UserActivityHook _actHook;
 
         private Task<Image> _captureTask;
-
-        /// <summary>
-        /// The project information about the current recording.
-        /// </summary>
-        internal ProjectInfo Project { get; set; }
 
         /// <summary>
         /// Lists of pressed keys.
@@ -86,26 +81,10 @@ namespace ScreenToGif.Windows
 
         #region Flags
 
-        public static readonly DependencyProperty StageProperty = DependencyProperty.Register("Stage", typeof(Stage), typeof(Recorder), new FrameworkPropertyMetadata(Stage.Stopped));
-
-        /// <summary>
-        /// The actual stage of the program.
-        /// </summary>
-        public Stage Stage
-        {
-            get => (Stage)GetValue(StageProperty);
-            set => SetValue(StageProperty, value);
-        }
-
         /// <summary>
         /// Indicates when the user is mouse-clicking.
         /// </summary>
         private bool _recordClicked = false;
-
-        /// <summary>
-        /// The action to be executed after closing this Window.
-        /// </summary>
-        public ExitAction ExitArg = ExitAction.Return;
 
         /// <summary>
         /// The delay of each frame took as snapshot.
@@ -128,7 +107,7 @@ namespace ScreenToGif.Windows
 
         #region Inicialization
 
-        public Recorder(bool hideBackButton = false)
+        public Recorder(bool hideBackButton = true)
         {
             InitializeComponent();
 
@@ -138,11 +117,9 @@ namespace ScreenToGif.Windows
 
             #region Adjust the position
 
-            if (!UpdatePositioning())
-            {
-                //If this is the first time opening the window (or someone reset the settings), let it center on the screen.
+            //Tries to adjust the position/size of the window, centers on screen otherwise.
+            if (!UpdatePositioning(true))
                 WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            }
 
             #endregion
 
@@ -161,17 +138,9 @@ namespace ScreenToGif.Windows
             catch (Exception) { }
 
             #endregion
-
-            #region Temporary folder
-
-            //If never configurated.
-            if (string.IsNullOrWhiteSpace(UserSettings.All.TemporaryFolder))
-                UserSettings.All.TemporaryFolder = Path.GetTempPath();
-
-            #endregion
         }
 
-        private async void Recorder_Loaded(object sender, RoutedEventArgs e)
+        private void Recorder_Loaded(object sender, RoutedEventArgs e)
         {
             #region If Snapshot
 
@@ -179,8 +148,6 @@ namespace ScreenToGif.Windows
                 EnableSnapshot_Executed(null, null);
 
             #endregion
-
-            await Task.Factory.StartNew(UpdateScreenDpi);
 
             #region Timer
 
@@ -499,7 +466,7 @@ namespace ScreenToGif.Windows
 
                 if (Project == null || Project.Frames.Count == 0)
                 {
-                    Project = new ProjectInfo().CreateProjectFolder();
+                    Project = new ProjectInfo().CreateProjectFolder(ProjectByType.ScreenRecorder);
                 }
 
                 #endregion
@@ -590,12 +557,12 @@ namespace ScreenToGif.Windows
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = true;
+            Close();
         }
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            Close();
         }
 
         #endregion
@@ -677,7 +644,7 @@ namespace ScreenToGif.Windows
 
             var fileName = $"{Project.FullPath}{FrameCount}.png";
 
-            Project.Frames.Add(new FrameInfo(fileName, FrameRate.GetMilliseconds(_snapDelay), new List<SimpleKeyGesture>(_keyList)));
+            Project.Frames.Add(new FrameInfo(fileName, FrameRate.GetMilliseconds(_snapDelay), _keyList));
 
             _keyList.Clear();
 
@@ -707,7 +674,7 @@ namespace ScreenToGif.Windows
             if (!OutterGrid.IsVisible)
                 return;
 
-            Project.Frames.Add(new FrameInfo(fileName, FrameRate.GetMilliseconds(_snapDelay), cursorPosX, cursorPosY, _recordClicked, new List<SimpleKeyGesture>(_keyList)));
+            Project.Frames.Add(new FrameInfo(fileName, FrameRate.GetMilliseconds(_snapDelay), cursorPosX, cursorPosY, _recordClicked, _keyList));
 
             _keyList.Clear();
 
@@ -727,7 +694,7 @@ namespace ScreenToGif.Windows
 
             var fileName = $"{Project.FullPath}{FrameCount}.png";
 
-            Project.Frames.Add(new FrameInfo(fileName, FrameRate.GetMilliseconds(_snapDelay), new List<SimpleKeyGesture>(_keyList)));
+            Project.Frames.Add(new FrameInfo(fileName, FrameRate.GetMilliseconds(_snapDelay), _keyList));
 
             _keyList.Clear();
 
@@ -745,7 +712,7 @@ namespace ScreenToGif.Windows
 
             var fileName = $"{Project.FullPath}{FrameCount}.png";
 
-            Project.Frames.Add(new FrameInfo(fileName, FrameRate.GetMilliseconds(_snapDelay), cursorPosX, cursorPosY, _recordClicked, new List<SimpleKeyGesture>(_keyList)));
+            Project.Frames.Add(new FrameInfo(fileName, FrameRate.GetMilliseconds(_snapDelay), cursorPosX, cursorPosY, _recordClicked, _keyList));
 
             _keyList.Clear();
 
@@ -767,7 +734,7 @@ namespace ScreenToGif.Windows
         /// <summary>
         /// Method that starts or pauses the recording
         /// </summary>
-        private async void RecordPause()
+        internal async void RecordPause()
         {
             switch (Stage)
             {
@@ -778,7 +745,7 @@ namespace ScreenToGif.Windows
                     _capture = new Timer { Interval = 1000 / FpsIntegerUpDown.Value };
                     _snapDelay = null;
 
-                    Project = new ProjectInfo().CreateProjectFolder();
+                    Project = new ProjectInfo().CreateProjectFolder(ProjectByType.ScreenRecorder);
 
                     _keyList.Clear();
                     FrameCount = 0;
@@ -899,7 +866,7 @@ namespace ScreenToGif.Windows
 
                 DiscardButton.BeginStoryboard(FindResource("ShowDiscardStoryboard") as Storyboard, HandoffBehavior.Compose);
 
-                Project = new ProjectInfo().CreateProjectFolder();
+                Project = new ProjectInfo().CreateProjectFolder(ProjectByType.ScreenRecorder);
 
                 IsRecording = true;
             }
@@ -945,8 +912,6 @@ namespace ScreenToGif.Windows
 
                     await Task.Delay(100);
 
-                    ExitArg = ExitAction.Recorded;
-                    //DialogResult = false;
                     Close();
 
                     #endregion
@@ -954,6 +919,12 @@ namespace ScreenToGif.Windows
                 else if ((Stage == Stage.PreStarting || Stage == Stage.Snapping) && !Project.Any)
                 {
                     #region if Pre-Starting or in Snapmode and no Frames, Stops
+
+                    if (Stage == Stage.PreStarting)
+                    {
+                        //Stop the pre-start timer to kill pre-start warming up
+                        _preStartTimer.Stop();
+                    }
 
                     //Only returns to the stopped stage if it was recording.
                     Stage = Stage == Stage.Snapping ? Stage.Snapping : Stage.Stopped;
@@ -1047,34 +1018,49 @@ namespace ScreenToGif.Windows
             }
         }
 
-        private bool UpdatePositioning()
+        private bool UpdatePositioning(bool startup = false)
         {
-            if (UserSettings.All.RecorderLeft > -0.77 && UserSettings.All.RecorderLeft < -0.75)
-                return false;
+            var top = UserSettings.All.RecorderTop;
+            var left = UserSettings.All.RecorderLeft;
+
+            //If the position was never set.
+            if (double.IsNaN(top) || double.IsNaN(left))
+            {
+                //Let it center on screen when the window is loading.
+                if (startup)
+                    return false;
+
+                //Let the code below decide where to position the screen.
+                top = 0;
+                left = 0;
+            }
 
             //The catch here is to get the closest monitor from current Top/Left point. 
-            var monitors = Monitor.AllMonitorsScaled(_scale);
-            var closest = monitors.FirstOrDefault(x => x.Bounds.Contains(new System.Windows.Point((int)UserSettings.All.RecorderLeft, (int)UserSettings.All.RecorderTop))) ?? monitors.FirstOrDefault(x => x.IsPrimary);
+            var monitors = Monitor.AllMonitorsScaled(this.Scale());
+            var closest = monitors.FirstOrDefault(x => x.Bounds.Contains(new System.Windows.Point((int)left, (int)top))) ?? monitors.FirstOrDefault(x => x.IsPrimary) ?? monitors.FirstOrDefault();
 
             if (closest == null)
                 return false;
 
             //To much to the Left.
             if (closest.WorkingArea.Left > UserSettings.All.RecorderLeft + UserSettings.All.RecorderWidth - 100)
-                UserSettings.All.RecorderLeft = closest.WorkingArea.Left;
+                left = closest.WorkingArea.Left;
 
             //Too much to the top.
             if (closest.WorkingArea.Top > UserSettings.All.RecorderTop + UserSettings.All.RecorderHeight - 100)
-                UserSettings.All.RecorderTop = closest.WorkingArea.Top;
+                top = closest.WorkingArea.Top;
 
             //Too much to the right.
             if (closest.WorkingArea.Right < UserSettings.All.RecorderLeft + 100)
-                UserSettings.All.RecorderLeft = closest.WorkingArea.Right - UserSettings.All.RecorderWidth;
+                left = closest.WorkingArea.Right - UserSettings.All.RecorderWidth;
 
             //Too much to the bottom.
             if (closest.WorkingArea.Bottom < UserSettings.All.RecorderTop + 100)
-                UserSettings.All.RecorderTop = closest.WorkingArea.Bottom - UserSettings.All.RecorderHeight;
+                top = closest.WorkingArea.Bottom - UserSettings.All.RecorderHeight;
 
+            UserSettings.All.RecorderTop = top;
+            UserSettings.All.RecorderLeft = left;
+            
             return true;
         }
 
@@ -1095,12 +1081,12 @@ namespace ScreenToGif.Windows
 
         private async void Window_LocationChanged(object sender, EventArgs e)
         {
-            _left = (int)Math.Round((Math.Round(Left, MidpointRounding.AwayFromZero) + Constants.LeftOffset) * _scale);
-            _top = (int)Math.Round((Math.Round(Top, MidpointRounding.AwayFromZero) + Constants.TopOffset) * _scale);
-
             //TestTextBlock.Text = $"{_left};{_top}";
 
             await Task.Factory.StartNew(UpdateScreenDpi);
+
+            _left = (int)Math.Round((Math.Round(Left, MidpointRounding.AwayFromZero) + Constants.LeftOffset) * _scale);
+            _top = (int)Math.Round((Math.Round(Top, MidpointRounding.AwayFromZero) + Constants.TopOffset) * _scale);
         }
 
         private void System_PowerModeChanged(object sender, PowerModeChangedEventArgs e)
@@ -1139,6 +1125,7 @@ namespace ScreenToGif.Windows
             #endregion
 
             SystemEvents.PowerModeChanged -= System_PowerModeChanged;
+            SystemEvents.DisplaySettingsChanged -= SystemEvents_DisplaySettingsChanged;
 
             #region Stops the timers
 

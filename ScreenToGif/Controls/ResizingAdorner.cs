@@ -137,9 +137,7 @@ namespace ScreenToGif.Controls
                 return;
 
             if (_adornedElement is Image && _adornedElement.CaptureMouse())
-            {
                 _lastestPosition = e.GetPosition(_parent);
-            }
         }
 
         #region DragDelta Event Handlers
@@ -164,14 +162,10 @@ namespace ScreenToGif.Controls
             adornedElement.Height = Math.Max(args.VerticalChange + adornedElement.Height, hitThumb.DesiredSize.Height);
 
             if (adornedElement.Width > parentElement.Width)
-            {
                 parentElement.Width = adornedElement.Width;
-            }
 
             if (adornedElement.Height > parentElement.Height)
-            {
                 parentElement.Height = adornedElement.Height;
-            }
         }
 
         /// <summary>
@@ -281,9 +275,7 @@ namespace ScreenToGif.Controls
             adornedElement.Height = Math.Max(args.VerticalChange + adornedElement.Height / zoomFactor, hitThumb.DesiredSize.Height);
 
             if (adornedElement.Height > parentElement.Height)
-            {
                 parentElement.Height = adornedElement.Height;
-            }
         }
 
         /// <summary>
@@ -384,7 +376,7 @@ namespace ScreenToGif.Controls
             _middleBottom.Arrange(new Rect(0, adornerHeight / 2, adornerWidth, adornerHeight));
             _middleTop.Arrange(new Rect(0, -adornerHeight / 2, adornerWidth, adornerHeight));
             _leftMiddle.Arrange(new Rect(-adornerWidth / 2, 0, adornerWidth, adornerHeight));
-            _rightMiddle.Arrange(new Rect(+adornerWidth / 2, 0, adornerWidth, adornerHeight));
+            _rightMiddle.Arrange(new Rect(adornerWidth / 2, 0, adornerWidth, adornerHeight));
 
             var zoomFactor = GetCanvasZoom(AdornedElement);
 
@@ -405,7 +397,7 @@ namespace ScreenToGif.Controls
 
             cornerThumb = new Thumb { Cursor = customizedCursor };
             cornerThumb.Height = cornerThumb.Width = 10;
-            cornerThumb.Style = (Style)FindResource("ScrollBarThumbVertical");
+            cornerThumb.Style = (Style)FindResource("ScrollBar.Thumb");
 
             _visualChildren.Add(cornerThumb);
         }
@@ -444,10 +436,7 @@ namespace ScreenToGif.Controls
 
         // Override the VisualChildrenCount and GetVisualChild properties to interface with 
         // the adorner's visual collection.
-        protected override int VisualChildrenCount
-        {
-            get { return _visualChildren.Count; }
-        }
+        protected override int VisualChildrenCount => _visualChildren.Count;
 
         /// <summary>
         /// Gets the VisualChildren at given position.
@@ -464,16 +453,12 @@ namespace ScreenToGif.Controls
         private double GetCanvasZoom(Visual referenceVisual)
         {
             if (referenceVisual.GetType() == typeof(Canvas))
-            {
                 return (referenceVisual as Canvas).LayoutTransform.Value.M11;
-            }
-            
+
             var parent = VisualTreeHelper.GetParent(referenceVisual) as Visual;
 
             if (parent.GetType() == typeof(Canvas))
-            {
                 return (parent as Canvas).LayoutTransform.Value.M11;
-            }
 
             return 1;
         }

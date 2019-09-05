@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 namespace ScreenToGif.Util
 {
@@ -172,6 +173,99 @@ namespace ScreenToGif.Util
             ms.Position = position;
             ms.Write(value, 0, value.Length);
             ms.Position = prevPosition;
+        }
+
+        /// <summary>
+        /// Pad the length of a block to a desired multiple.
+        /// </summary>
+        /// <param name="ms">This current stream to be padded.</param>
+        /// <param name="padMultiple">Byte multiple to pad to.</param>
+        public static void WritePadding(this Stream ms, int padMultiple)
+        {
+            var padding = 0;
+
+            if (ms.Length > 0)
+            {
+                var remainder = (int)ms.Length % padMultiple;
+
+                if (remainder > 0)
+                    padding = padMultiple - remainder;
+            }
+
+            for (long i = 0; i < padding; i++)
+                ms.WriteByte(0);
+        }
+
+        /// <summary>
+        /// Writes one stream into another.
+        /// </summary>
+        /// <param name="ms">The stream that will receive the other stream.</param>
+        /// <param name="stream">The stream to be copied.</param>
+        internal static void WriteStream(this Stream ms, Stream stream)
+        {
+            stream.Position = 0;
+
+            stream.CopyTo(ms, (int)Math.Min(4096, stream.Length));
+        }
+
+        public static void WriteStringUtf8(this Stream ms, string value)
+        {
+            var bytes = Encoding.UTF8.GetBytes(value);
+            ms.Write(bytes, 0, bytes.Length);
+        }
+
+        public static void WriteString1252(this Stream ms, string value)
+        {
+            var bytes = Encoding.GetEncoding(1252).GetBytes(value);
+            ms.Write(bytes, 0, bytes.Length);
+        }
+
+        public static byte[] GetPascalStringAsBytes(byte[] bytes, bool padded = true, int byteLimit = 31)
+        {
+            using (var ms = new MemoryStream())
+            {
+                if (bytes.Length > byteLimit)
+                {
+                    var temp = new byte[byteLimit];
+                    Array.Copy(bytes, temp, byteLimit);
+                    bytes = temp;
+                }
+
+                ms.WritePascalString(bytes, padded);
+
+                return ms.ToArray();
+            }
+        }
+
+        public static void WritePascalString(this Stream ms, string value, bool padded = true)
+        {
+            var bytes = Encoding.GetEncoding(1252).GetBytes(value);
+
+            ms.WriteByte((byte)bytes.Length); //String size, 1 byte.
+            ms.Write(bytes, 0, bytes.Length); //String, XX bytes.
+
+            if (!padded)
+                return;
+
+            var padding = 4 - (bytes.Length + 1) % 4;
+
+            if (padding != 4) //There's zero padding if equals to 4.
+                ms.Position += padding;
+        }
+
+        public static void WritePascalString(this Stream ms, byte[] bytes, bool padded = true)
+        {
+            ms.WriteByte((byte)bytes.Length); //String size, 1 byte.
+            ms.Write(bytes, 0, bytes.Length); //String, XX bytes (Max 31).
+
+            if (!padded)
+                return;
+
+            var padding = 4 - (bytes.Length + 1) % 4;
+
+            if (padding != 4) //There's zero padding if equals to 4.
+                for (int i = 0; i < padding; i++) 
+                    ms.WriteByte(0);
         }
 
         public static void WriteInt16(this Stream ms, short value)

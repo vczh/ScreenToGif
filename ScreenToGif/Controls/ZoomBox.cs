@@ -1,9 +1,12 @@
 ﻿using System;
 using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using ScreenToGif.ImageUtil;
 using ScreenToGif.Util;
 
 namespace ScreenToGif.Controls
@@ -26,14 +29,16 @@ namespace ScreenToGif.Controls
         private ScaleTransform _scaleTransform;
         private Grid _grid;
 
+        private double _previousZoom = 1d;
+
         #endregion
 
         #region Dependency Properties
 
-        public static readonly DependencyProperty ImageSourceProperty = DependencyProperty.Register("ImageSource", typeof(string), typeof(ZoomBox), 
+        public static readonly DependencyProperty ImageSourceProperty = DependencyProperty.Register("ImageSource", typeof(string), typeof(ZoomBox),
             new FrameworkPropertyMetadata(ImageSource_PropertyChanged));
 
-        public static readonly DependencyProperty ZoomProperty = DependencyProperty.Register("Zoom", typeof(double), typeof(ZoomBox), 
+        public static readonly DependencyProperty ZoomProperty = DependencyProperty.Register("Zoom", typeof(double), typeof(ZoomBox),
             new FrameworkPropertyMetadata(1.0, FrameworkPropertyMetadataOptions.AffectsRender, Zoom_PropertyChanged));
 
         public static readonly DependencyProperty ImageScaleProperty = DependencyProperty.Register("ImageScale", typeof(double), typeof(ZoomBox),
@@ -117,7 +122,7 @@ namespace ScreenToGif.Controls
         /// <summary>
         /// Create a custom routed event by first registering a RoutedEventID, this event uses the bubbling routing strategy.
         /// </summary>
-        public static readonly RoutedEvent ValueChangedEvent = EventManager.RegisterRoutedEvent("ValueChanged", RoutingStrategy.Bubble, 
+        public static readonly RoutedEvent ValueChangedEvent = EventManager.RegisterRoutedEvent("ValueChanged", RoutingStrategy.Bubble,
             typeof(RoutedEventHandler), typeof(ZoomBox));
 
         /// <summary>
@@ -175,7 +180,7 @@ namespace ScreenToGif.Controls
 
             zoomBox.ImageSource = e.NewValue as string;
         }
-        
+
         private static void Zoom_PropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (!(d is ZoomBox box))
@@ -183,6 +188,8 @@ namespace ScreenToGif.Controls
 
             if (!(e.NewValue is double value))
                 return;
+
+            box._previousZoom = e.OldValue as double? ?? 1;
 
             //Maximum and minimum.
             if (value < 0.1)
@@ -329,19 +336,35 @@ namespace ScreenToGif.Controls
 
             if (double.IsNaN(newOffsetX) || double.IsNaN(newOffsetY))
                 return;
-            
+
             _scrollViewer.ScrollToHorizontalOffset(newOffsetX);
             _scrollViewer.ScrollToVerticalOffset(newOffsetY);
         }
 
         #endregion
 
+        public void LoadFromPath(string path)
+        {
+            ImageSource = path;
+
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read))
+            {
+                var bitmapImage = new BitmapImage();
+                bitmapImage.BeginInit();
+                bitmapImage.CacheOption = BitmapCacheOption.OnDemand;
+                bitmapImage.StreamSource = stream;
+                bitmapImage.EndInit();
+
+                PixelSize = new Size(bitmapImage.PixelWidth, bitmapImage.PixelHeight);
+                ImageScale = Math.Round(bitmapImage.DpiX / 96d, 2);
+            }
+
+            RefreshImage();
+        }
+
         public void RefreshImage()
         {
-            //if (ImageSource == null || !File.Exists(ImageSource))
-            //    return;
-
-            //var a = ImageSource.ScaledSize();
+            //ImageScale = ImageSource.ScaleOf();
 
             //Calculates how much bigger or smaller the image should be presented, based on the window and image scale (DPI/96).
             ImageDpi = ImageScale * 96d;
@@ -353,7 +376,7 @@ namespace ScreenToGif.Controls
                 _scaleTransform.ScaleX = Zoom / ScaleDiff;
                 _scaleTransform.ScaleY = Zoom / ScaleDiff;
             }
-           
+
             //Raise event.
             RaiseValueChangedEvent();
         }
@@ -370,6 +393,23 @@ namespace ScreenToGif.Controls
             //var tt = GetTranslateTransform(_child);
             //tt.X = 0.0;
             //tt.Y = 0.0;
+        }
+
+        /// <summary>
+        /// Returns to the previous selected zoom.
+        /// </summary>
+        public void ResetToPrevious()
+        {
+            //Resets the zoom.
+            Zoom = _previousZoom;
+        }
+
+        /// <summary>
+        /// Sets the current zoom as the previous zoom.
+        /// </summary>
+        public void SetZoomAsPrevious()
+        {
+            _previousZoom = Zoom;
         }
 
         /// <summary>
@@ -396,9 +436,7 @@ namespace ScreenToGif.Controls
         /// <returns>The actual size * the scale of the element.</returns>
         public Size GetElementSize(bool noScalling = false)
         {
-            var image = _scrollViewer.Content as FrameworkElement;
-
-            if (image == null)
+            if (!(_scrollViewer.Content is FrameworkElement image))
                 return new Size(Math.Max(ActualWidth, 0), Math.Max(ActualHeight, 0));
 
             var scaleX = noScalling ? 1 : _scaleTransform.ScaleX;
@@ -413,13 +451,21 @@ namespace ScreenToGif.Controls
         /// <returns>The actual image size.</returns>
         public Size GetImageSize()
         {
-            var image = _scrollViewer.Content as FrameworkElement;
-
-            if (image == null)
+            if (!(_scrollViewer.Content is FrameworkElement image))
                 return new Size(Math.Max(ActualWidth, 0), Math.Max(ActualHeight, 0));
 
             //Ignore scale transform?
             return new Size(image.ActualWidth * ImageScale, image.ActualHeight * ImageScale);
+        }
+
+        public Size MeasureImageSizeAtZoom100(string path)
+        {
+            var image = path.SourceFrom();
+            var imageScale = Math.Round(image.DpiX / 96d, 2);
+            var scaleDiff = this.Scale() / imageScale;
+            //var size = new Size(image.Width * imageScale, image.Height * imageScale);
+
+            return new Size(image.Width * 1d / scaleDiff, image.Height * 1d / scaleDiff);
         }
     }
 }

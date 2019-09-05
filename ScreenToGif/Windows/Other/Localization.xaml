@@ -3,15 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:c="clr-namespace:ScreenToGif.Controls"
         xmlns:util="clr-namespace:ScreenToGif.Util"
-        xmlns:converters="clr-namespace:ScreenToGif.Util.Converters"
-        Title="{DynamicResource Localization}" Height="300" Width="600" MinHeight="300" MinWidth="400" 
-        Icon="/ScreenToGif;component/Resources/Logo.ico" WindowStartupLocation="CenterOwner"
-        SnapsToDevicePixels="True" Loaded="Localization_OnLoaded">
-    
+        xmlns:v="clr-namespace:ScreenToGif.Util.Converters"
+        Title="{DynamicResource Localization}" MinHeight="300" MinWidth="500" MaxHeight="500" SizeToContent="WidthAndHeight"
+        Icon="/ScreenToGif;component/Resources/Logo.ico" WindowStartupLocation="CenterOwner" SnapsToDevicePixels="True" 
+        Background="{DynamicResource Panel.Background}" Loaded="Localization_OnLoaded">
+
     <Window.Resources>
-        <converters:RoutedCommandToInputGestureTextConverter x:Key="CommandToInputGestureTextConverter"/>
+        <v:RoutedCommandToInputGestureTextConverter x:Key="CommandToInputGestureTextConverter"/>
     </Window.Resources>
-    
+
     <Window.CommandBindings>
         <CommandBinding Command="util:Commands.MoveUpLocalization" CanExecute="MoveUp_CanExecute" Executed="MoveUp_Executed"/>
         <CommandBinding Command="util:Commands.MoveDownLocalization" CanExecute="MoveDown_CanExecute" Executed="MoveDown_Executed"/>
@@ -19,13 +19,15 @@
         <CommandBinding Command="util:Commands.RemoveLocalization" CanExecute="Remove_CanExecute" Executed="Remove_Executed"/>
         <CommandBinding Command="util:Commands.AddLocalization" CanExecute="Add_CanExecute" Executed="Add_Executed"/>
     </Window.CommandBindings>
-    
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
             <RowDefinition Height="40"/>
         </Grid.RowDefinitions>
+
+        <c:StatusBand Grid.Row="0" x:Name="StatusBand"/>
 
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>
@@ -69,13 +71,13 @@
                            ToolTipService.Placement="Right" ToolTipService.VerticalOffset="-5"/>
         </Grid>
 
-        <Grid Grid.Row="2" Background="WhiteSmoke" UseLayoutRounding="False">
+        <Grid Grid.Row="2" Background="{DynamicResource Panel.Background.Level3}" UseLayoutRounding="False">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Column="0" TextAlignment="Center" VerticalAlignment="Center" FontSize="13" Foreground="#FF003399" Margin="0">
+            <TextBlock Grid.Column="0" TextAlignment="Center" VerticalAlignment="Center" FontSize="13" Foreground="{DynamicResource Element.Foreground.Header}" Margin="0">
                 <Run Text="{DynamicResource Localization.ResourcePositionUsed}"/><LineBreak/>
                 <Run Text="{DynamicResource Localization.MoveRosourcePosition}"/>
             </TextBlock>

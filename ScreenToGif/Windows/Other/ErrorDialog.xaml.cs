@@ -21,11 +21,11 @@ namespace ScreenToGif.Windows.Other
             switch (icon)
             {
                 case Icons.Error:
-                    return (Canvas)FindResource("Vector.Error");
+                    return (Canvas)FindResource("Vector.Cancel.Round");
                 case Icons.Info:
                     return (Canvas)FindResource("Vector.Info");
                 case Icons.Success:
-                    return (Canvas)FindResource("Vector.Success");
+                    return (Canvas)FindResource("Vector.Ok.Round");
                 case Icons.Warning:
                     return (Canvas)FindResource("Vector.Warning");
                 case Icons.Question:
@@ -41,6 +41,7 @@ namespace ScreenToGif.Windows.Other
             CancelButton.Visibility = Visibility.Collapsed;
             YesButton.Visibility = Visibility.Collapsed;
             NoButton.Visibility = Visibility.Collapsed;
+            DetailsButton.Visibility = Exception != null ? Visibility.Visible : Visibility.Collapsed;
 
             OkButton.Focus();
 
@@ -55,6 +56,7 @@ namespace ScreenToGif.Windows.Other
         {
             YesButton.Visibility = Visibility.Collapsed;
             NoButton.Visibility = Visibility.Collapsed;
+            DetailsButton.Visibility = Exception != null ? Visibility.Visible : Visibility.Collapsed;
 
             CancelButton.Focus();
 
@@ -69,6 +71,7 @@ namespace ScreenToGif.Windows.Other
         {
             CancelButton.Visibility = Visibility.Collapsed;
             OkButton.Visibility = Visibility.Collapsed;
+            DetailsButton.Visibility = Exception != null ? Visibility.Visible : Visibility.Collapsed;
 
             NoButton.Focus();
 

@@ -20,11 +20,11 @@ namespace ScreenToGif.Windows.Other
             switch (icon)
             {
                 case Icons.Error:
-                    return (Canvas)FindResource("Vector.Error");
+                    return (Canvas)FindResource("Vector.Cancel.Round");
                 case Icons.Info:
                     return (Canvas)FindResource("Vector.Info");
                 case Icons.Success:
-                    return (Canvas)FindResource("Vector.Success");
+                    return (Canvas)FindResource("Vector.Ok.Round");
                 case Icons.Warning:
                     return (Canvas)FindResource("Vector.Warning");
                 case Icons.Question:
@@ -165,36 +165,5 @@ namespace ScreenToGif.Windows.Other
         }
 
         #endregion
-        
-        ///// <summary>
-        ///// Dialog Icons.
-        ///// </summary>
-        //public enum Icons
-        //{
-        //    /// <summary>
-        //    /// Information. Blue.
-        //    /// </summary>
-        //    Info,
-
-        //    /// <summary>
-        //    /// Warning, yellow.
-        //    /// </summary>
-        //    Warning,
-
-        //    /// <summary>
-        //    /// Error, red.
-        //    /// </summary>
-        //    Error,
-
-        //    /// <summary>
-        //    /// Success, green.
-        //    /// </summary>
-        //    Success,
-
-        //    /// <summary>
-        //    /// A question mark, blue.
-        //    /// </summary>
-        //    Question,
-        //}
     }
 }

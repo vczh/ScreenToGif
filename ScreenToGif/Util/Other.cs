@@ -100,7 +100,10 @@ namespace ScreenToGif.Util
             return new Point(pointScreenPixels.X, pointScreenPixels.Y);
         }
 
-        public static bool IsWin8OrHigher()
+        /// <summary>
+        /// Checks if the Aero glass is supported this system.
+        /// </summary>
+        public static bool IsGlassSupported()
         {
             if (Environment.OSVersion.Platform != PlatformID.Win32NT || Environment.OSVersion.Version < new Version(6, 2, 9200, 0))
                 return false;
@@ -113,6 +116,11 @@ namespace ScreenToGif.Util
                 return false;
 
             return true;
+        }
+
+        public static bool IsWin8OrHigher()
+        {
+            return Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version >= new Version(6, 2, 9200, 0);
         }
 
         public static string GetTextResource(string resourceName)
@@ -180,6 +188,11 @@ namespace ScreenToGif.Util
                 Math.Round(rect.Width - (offset * 2d), MidpointRounding.AwayFromZero), Math.Round(rect.Height - (offset * 2d), MidpointRounding.AwayFromZero));
 
             //return new Rect(rect.Left + offset, rect.Top + offset, rect.Width - (offset * 2d), rect.Height - (offset * 2d));
+        }
+
+        internal static Rect Translate(this Rect rect, double offsetX, double offsetY)
+        {
+            return rect.IsEmpty ? rect : new Rect(rect.Left + offsetX, rect.Top + offsetY, rect.Width, rect.Height);
         }
 
         internal static Rect Scale(this Rect rect, double scale)
@@ -349,7 +362,8 @@ namespace ScreenToGif.Util
 
         public static List<FrameInfo> CopyList(this List<FrameInfo> target)
         {
-            return new List<FrameInfo>(target.Select(s => new FrameInfo(s.Path, s.Delay, s.CursorX, s.CursorY, s.WasClicked, new List<SimpleKeyGesture>(s.KeyList.Select(y => new SimpleKeyGesture(y.Key, y.Modifiers, y.IsUppercase))), s.Index)));
+            return new List<FrameInfo>(target.Select(s => new FrameInfo(s.Path, s.Delay, s.CursorX, s.CursorY, s.WasClicked, 
+                s.KeyList != null ? new List<SimpleKeyGesture>(s.KeyList.Select(y => new SimpleKeyGesture(y.Key, y.Modifiers, y.IsUppercase))) : null, s.Index)));
         }
 
         /// <summary>
@@ -358,7 +372,7 @@ namespace ScreenToGif.Util
         /// <param name="start">The start index.</param>
         /// <param name="end">The end index. If it's a lower value than the start index, the start becomes the end and vice-versa.</param>
         /// <returns>A list of ordered integers.</returns>
-        public static List<int> CreateIndexList(int start, int end)
+        public static List<int> ListOfIndexesOld(int start, int end)
         {
             if (start > end)
                 return Enumerable.Range(end, start - end + 1).ToList();
@@ -372,63 +386,12 @@ namespace ScreenToGif.Util
         /// <param name="start">The start index.</param>
         /// <param name="quantity">The quantity indexes to create.</param>
         /// <returns>A list of ordered integers.</returns>
-        public static List<int> CreateIndexList2(int start, int quantity)
+        public static List<int> ListOfIndexes(int start, int quantity)
         {
             //if (start > end)
             //    return Enumerable.Range(end, start - end + 1).ToList();
 
             return Enumerable.Range(start, quantity).ToList();
-        }
-
-        /// <summary>
-        /// Copies the List and saves the images in another folder.
-        /// </summary>
-        /// <param name="target">The List to copy</param>
-        /// <param name="usePadding">If true, the name of the frames will be adjusted in order to circunvent file ordering issue. For example: 010.png instead of 10.png if there's more than 999 frames.</param>
-        /// <returns>The copied list.</returns>
-        public static List<FrameInfo> CopyToEncode(this List<FrameInfo> target, bool usePadding = false)
-        {
-            #region Folder
-
-            var fileNameAux = Path.GetFileName(target[0].Path);
-
-            if (fileNameAux == null)
-                throw new ArgumentException("Impossible to get filename.");
-
-            var encodeFolder = Path.Combine(target[0].Path.Replace(fileNameAux, ""), "Encode " + DateTime.Now.ToString("yyyy-MM-dd hh-mm-ss"));
-
-            if (!Directory.Exists(encodeFolder))
-                Directory.CreateDirectory(encodeFolder);
-
-            #endregion
-
-            var newList = new List<FrameInfo>();
-
-            try
-            {
-                var pad = usePadding ? (target.Count - 1).ToString().Length : 0;
-
-                foreach (var frameInfo in target)
-                {
-                    //Changes the path of the image. Writes as an ordered list of files, replacing the old filenames.
-                    var filename = Path.Combine(encodeFolder, newList.Count.ToString().PadLeft(pad, '0') + ".png");
-                    //var filename = Path.Combine(encodeFolder, Path.GetFileName(frameInfo.Path) + ".png");
-
-                    //Copy the image to the folder.
-                    File.Copy(frameInfo.Path, filename, true);
-                    //File.Copy(frameInfo.Path, filename);
-
-                    //Create the new object and add to the list.
-                    newList.Add(new FrameInfo(filename, frameInfo.Delay));
-                }
-            }
-            catch (Exception ex)
-            {
-                LogWriter.Log(ex, "");
-                throw;
-            }
-
-            return newList;
         }
 
         /// <summary>
@@ -530,18 +493,40 @@ namespace ScreenToGif.Util
 
         #region Dependencies
 
-        public static bool IsFfmpegPresent(bool ignoreEnvironment = false)
+        /// <summary>
+        /// When dealing with relative paths, the app will fails to point to the right folder when starting it via the "Open with..." or automatic startup methods.
+        /// </summary>
+        public static string AdjustPath(string path)
         {
-            var realPath = UserSettings.All.FfmpegLocation;
-
             //If the path is relative, File.Exists() was returning C:\\Windows\\System32\ffmpeg.exe when the app was lauched from the "Open with" context menu.
             //So, in order to get the correct location, I need to combine the current base directory with the relative path.
-            if (!string.IsNullOrWhiteSpace(UserSettings.All.FfmpegLocation) && !Path.IsPathRooted(UserSettings.All.FfmpegLocation))
-                realPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, UserSettings.All.FfmpegLocation.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar));
+            if (!string.IsNullOrWhiteSpace(path) && !Path.IsPathRooted(path))
+            {
+                var adjusted = path.StartsWith("." + Path.AltDirectorySeparatorChar) ? path.TrimStart('.', Path.AltDirectorySeparatorChar) :
+                    path.StartsWith("." + Path.DirectorySeparatorChar) ? path.TrimStart('.', Path.DirectorySeparatorChar) : path;
+
+                return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, adjusted);
+            }
+
+            return path;
+        }
+
+        public static bool IsFfmpegPresent(bool ignoreEnvironment = false, bool ignoreEmpty = false)
+        {
+            //If the path is relative, File.Exists() was returning C:\\Windows\\System32\ffmpeg.exe when the app was lauched from the "Open with" context menu.
+            //So, in order to get the correct location, I need to combine the current base directory with the relative path.
+            var realPath = AdjustPath(UserSettings.All.FfmpegLocation);
 
             //File location already choosen or detected.
             if (!string.IsNullOrWhiteSpace(realPath) && File.Exists(realPath))
                 return true;
+
+            //The path was not selected, but the file exists inside the same folder.
+            if (!ignoreEmpty && string.IsNullOrWhiteSpace(UserSettings.All.FfmpegLocation) && File.Exists(AdjustPath("ffmpeg.exe")))
+            {
+                UserSettings.All.FfmpegLocation = "ffmpeg.exe";
+                return true;
+            }
 
             //If not found by direct/relative path, ignore the environment variables.
             if (ignoreEnvironment)
@@ -574,18 +559,22 @@ namespace ScreenToGif.Util
             return false;
         }
 
-        public static bool IsGifskiPresent(bool ignoreEnvironment = false)
+        public static bool IsGifskiPresent(bool ignoreEnvironment = false, bool ignoreEmpty = false)
         {
-            var realPath = UserSettings.All.GifskiLocation;
-
             //If the path is relative, File.Exists() was returning C:\\Windows\\System32\Gifski.dll when the app was lauched from the "Open with" context menu.
             //So, in order to get the correct location, I need to combine the current base directory with the relative path.
-            if (!string.IsNullOrWhiteSpace(UserSettings.All.GifskiLocation) && !Path.IsPathRooted(UserSettings.All.GifskiLocation))
-                realPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, UserSettings.All.GifskiLocation.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar));
+            var realPath = AdjustPath(UserSettings.All.GifskiLocation);
 
             //File location already choosen or detected.
             if (!string.IsNullOrWhiteSpace(realPath) && File.Exists(realPath))
                 return true;
+
+            //The path was not selected, but the file exists inside the same folder.
+            if (!ignoreEmpty && string.IsNullOrWhiteSpace(UserSettings.All.GifskiLocation) && File.Exists(AdjustPath("gifski.dll")))
+            {
+                UserSettings.All.GifskiLocation = "gifski.dll";
+                return true;
+            }
 
             //If not found by direct/relative path, ignore the environment variables.
             if (ignoreEnvironment)
@@ -610,6 +599,57 @@ namespace ScreenToGif.Util
                 }
 
                 UserSettings.All.GifskiLocation = Path.Combine(path, "gifski.dll");
+                return true;
+            }
+
+            #endregion
+
+            return false;
+        }
+
+        public static bool IsSharpDxPresent(bool ignoreEnvironment = false, bool ignoreEmpty = false)
+        {
+            //So, in order to get the correct location, I need to combine the current base directory with the relative path.
+            var realPath = AdjustPath(string.IsNullOrWhiteSpace(UserSettings.All.SharpDxLocationFolder) ? "." + Path.DirectorySeparatorChar : UserSettings.All.SharpDxLocationFolder);
+
+            //All these libraries should exist:
+            //SharpDX.dll
+            //SharpDX.DXGI.dll
+            //SharpDX.Direct3D11.dll
+
+            //File location already choosen or detected.
+            if (realPath != null && File.Exists(Path.Combine(realPath, "SharpDX.dll")) && File.Exists(Path.Combine(realPath, "SharpDX.DXGI.dll")) && File.Exists(Path.Combine(realPath, "SharpDX.Direct3D11.dll")))
+            {
+                //The path was not selected, but the file exists inside the same folder.
+                if (!ignoreEmpty && string.IsNullOrWhiteSpace(UserSettings.All.SharpDxLocationFolder))
+                    UserSettings.All.SharpDxLocationFolder = "." + Path.DirectorySeparatorChar;
+
+                return true;
+            }
+
+            //If not found by direct/relative path, ignore the environment variables.
+            if (ignoreEnvironment)
+                return false;
+
+            #region Check Environment Variables
+
+            var variable = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine) + ";" +
+                Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User);
+
+            foreach (var path in variable.Split(';').Where(w => !string.IsNullOrWhiteSpace(w)))
+            {
+                try
+                {
+                    if (!File.Exists(Path.Combine(path, "SharpDX.dll")) || !File.Exists(Path.Combine(path, "SharpDX.DXGI.dll")) || !File.Exists(Path.Combine(path, "SharpDX.Direct3D11.dll")))
+                        continue;
+                }
+                catch (Exception ex)
+                {
+                    //LogWriter.Log(ex, "Checking the path variables", path);
+                    continue;
+                }
+
+                UserSettings.All.GifskiLocation = path;
                 return true;
             }
 

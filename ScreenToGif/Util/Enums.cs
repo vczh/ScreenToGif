@@ -12,6 +12,21 @@
     }
 
     /// <summary>
+    /// The direction in which the window should be resized.
+    /// </summary>
+    public enum ResizeDirection
+    {
+        Left = 1,
+        Right = 2,
+        Top = 3,
+        TopLeft = 4,
+        TopRight = 5,
+        Bottom = 6,
+        BottomLeft = 7,
+        BottomRight = 8
+    }
+
+    /// <summary>
     /// Determines how the past bahaves.
     /// </summary>
     public enum PasteBehavior
@@ -195,6 +210,11 @@
         /// Obfuscate Panel.
         /// </summary>
         Obfuscate = -12,
+
+        /// <summary>
+        /// Shadow Panel.
+        /// </summary>
+        Shadow = -13,
     }
 
     /// <summary>
@@ -266,7 +286,7 @@
     }
 
     /// <summary>
-    /// EncoderListBox Item Status.
+    /// Encoding status.
     /// </summary>
     public enum Status
     {
@@ -335,15 +355,14 @@
     {
         Override,
         IncreaseDecrease,
-      Scale
-   }
+        Scale
+    }
 
     /// <summary>
     /// Type of the gif encoder.
     /// </summary>
     public enum GifEncoderType
     {
-        Legacy,
         ScreenToGif,
         PaintNet,
         FFmpeg,
@@ -364,10 +383,12 @@
     /// </summary>
     public enum ColorQuantizationType
     {
-        Ordered,
-        NeuQuant,
-        Octree,
-        Grayscale,
+        Neural = 0,
+        Octree = 1,
+        MedianCut = 2,
+        Grayscale = 3,
+        MostUsed = 4,
+        Palette = 5,
     }
 
     /// <summary>
@@ -461,6 +482,16 @@
     }
 
     /// <summary>
+    /// Specifies the type of frame delay adjustment for the 'Reduce Framerate'.
+    /// </summary>
+    public enum ReduceDelayType
+    {
+        DontAdjust = 0,
+        Previous = 1,
+        Evenly = 2
+    }
+
+    /// <summary>
     /// Specifies the type of frame removal.
     /// </summary>
     public enum DuplicatesRemovalType
@@ -491,7 +522,7 @@
         IconLeftMouseUp,
         IconMiddleMouseDown,
         IconMiddleMouseUp,
-        IconDoubleClick
+        IconLeftDoubleClick
     }
 
 
@@ -544,8 +575,8 @@
         None = 0,
         ImgurAnonymous = 1,
         Imgur = 2,
-        GyfcatAnonymous = 3,
-        Gyfcat = 4,
+        GfycatAnonymous = 3,
+        Gfycat = 4,
         Yandex = 5,
     }
 
@@ -595,5 +626,16 @@
         Override = 0,
         IncreaseDecrease = 1,
         Scale = 2,
+    }
+
+    /// <summary>
+    /// Type of capture frequency mode for the screen recorder.
+    /// </summary>
+    public enum CaptureFrequency
+    {
+        Manual,
+        PerSecond,
+        PerMinute,
+        PerHour
     }
 }

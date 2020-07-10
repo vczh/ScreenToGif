@@ -11,10 +11,11 @@ namespace ScreenToGif.Util
         /// Converts a length value to a readable size.
         /// </summary>
         /// <param name="byteCount">The length of the file.</param>
+        /// <param name="format">The format of the number.</param>
         /// <returns>A string representation of a file size.</returns>
-        public static string BytesToString(long byteCount)
+        public static string BytesToString(long byteCount, string format = null)
         {
-            string[] suf = { " B", " KB", " MB", " GB" }; //I hope no one make a gif with TB's of size. haha - Nicke
+            string[] suf = { " B", " KB", " MB", " GB", " TB", " PB" }; 
 
             if (byteCount == 0)
                 return "0" + suf[0];
@@ -23,7 +24,7 @@ namespace ScreenToGif.Util
             var place = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
             var num = Math.Round(bytes / Math.Pow(1024, place), 1);
 
-            return (Math.Sign(byteCount) * num) + suf[place];
+            return (Math.Sign(byteCount) * num).ToString(format) + suf[place];
         }
 
         /// <summary>
@@ -33,7 +34,7 @@ namespace ScreenToGif.Util
         /// <returns>A string representation of a file size.</returns>
         public static string BytesToString(ulong byteCount)
         {
-            string[] suf = { " B", " KB", " MB", " GB" }; //I hope no one make a gif with TB's of size. haha - Nicke
+            string[] suf = { " B", " KB", " MB", " GB", " TB", " PB" }; 
 
             if (byteCount == 0)
                 return "0" + suf[0];
@@ -68,7 +69,7 @@ namespace ScreenToGif.Util
         {
             var random = new Random();
 
-            string[] texts = { "Welcome.New", "Welcome.Import", "Welcome.ThankYou", "Welcome.Size", "Welcome.Contact", "Welcome.Trouble", "Welcome.NewRecorder" };
+            string[] texts = { "S.Editor.Welcome.New", "S.Editor.Welcome.Import", "S.Editor.Welcome.ThankYou", "S.Editor.Welcome.Size", "S.Editor.Welcome.Contact", "S.Editor.Welcome.Trouble", "S.Editor.Welcome.NewRecorder" };
 
             var pick1 = random.Next(texts.Length);
 
@@ -83,7 +84,7 @@ namespace ScreenToGif.Util
         {
             var random = new Random();
 
-            string[] texts = { "Welcome.New", "Welcome.Import", "Welcome.ThankYou", "Welcome.Size", "Welcome.Contact", "Welcome.Trouble", "Welcome.NewRecorder" };
+            string[] texts = { "S.Editor.Welcome.New", "S.Editor.Welcome.Import", "S.Editor.Welcome.ThankYou", "S.Editor.Welcome.Size", "S.Editor.Welcome.Contact", "S.Editor.Welcome.Trouble", "S.Editor.Welcome.NewRecorder" };
 
             var pick1 = random.Next(texts.Length);
             var pick2 = random.Next(texts.Length);

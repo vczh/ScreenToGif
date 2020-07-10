@@ -13,7 +13,12 @@ namespace ScreenToGif.Windows.Other
         public Startup()
         {
             InitializeComponent();
+        }
 
+        #region Events
+
+        private void Startup_Initialized(object sender, EventArgs e)
+        {
             #region Adjust the position
 
             //Tries to adjust the position/size of the window, centers on screen otherwise.
@@ -23,23 +28,29 @@ namespace ScreenToGif.Windows.Other
             #endregion
         }
 
-        #region Events
-
         private void Startup_Loaded(object sender, RoutedEventArgs e)
         {
             SystemEvents.DisplaySettingsChanged += System_DisplaySettingsChanged;
+
+            #region Adjust the position
+
+            //Tries to adjust the position/size of the window, centers on screen otherwise.
+            if (!UpdatePositioning())
+                WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+            #endregion
 
             NotificationUpdated();
         }
 
         private void Update_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = Global.UpdateModel != null;
+            e.CanExecute = Global.UpdateAvailable != null;
         }
 
         private void Update_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            App.MainViewModel?.UpdateAction();
+            App.MainViewModel?.PromptUpdate.Execute(null);
         }
 
         private void System_DisplaySettingsChanged(object sender, EventArgs e)
@@ -110,13 +121,13 @@ namespace ScreenToGif.Windows.Other
 
         public void NotificationUpdated()
         {
-            if (Global.UpdateModel == null)
+            if (Global.UpdateAvailable == null)
             {
                 UpdateTextBlock.Visibility = Visibility.Collapsed;
                 return;
             }
 
-            UpdateRun.Text = string.Format(LocalizationHelper.Get("NewRelease") ?? "New release available • {0}", Global.UpdateModel.Version.ToStringShort());
+            UpdateRun.Text = string.Format(LocalizationHelper.Get("S.StartUp.NewRelease") ?? "New release available • {0}", Global.UpdateAvailable.Version.ToStringShort());
             UpdateTextBlock.Visibility = Visibility.Visible;
 
             CommandManager.InvalidateRequerySuggested();

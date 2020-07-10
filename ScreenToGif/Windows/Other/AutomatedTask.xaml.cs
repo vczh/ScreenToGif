@@ -28,6 +28,7 @@ namespace ScreenToGif.Windows.Other
                 TypeTextBlock.Text = LocalizationHelper.Get("S.Edit");
                 TypeComboBox.SelectedIndex = (int)(CurrentTask?.TaskType ?? DefaultTaskModel.TaskTypeEnum.NotDeclared);
                 TypeComboBox.IsEnabled = false;
+                EnabledCheckBox.Visibility = Visibility.Visible;
 
                 TypeComboBox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
             }
@@ -58,6 +59,15 @@ namespace ScreenToGif.Windows.Other
                     case DefaultTaskModel.TaskTypeEnum.Delay:
                         CurrentTask = DelayModel.Default();
                         break;
+                    case DefaultTaskModel.TaskTypeEnum.Progress:
+                        CurrentTask = ProgressModel.Default();
+                        break;
+                    case DefaultTaskModel.TaskTypeEnum.Border:
+                        CurrentTask = BorderModel.Default();
+                        break;
+                    case DefaultTaskModel.TaskTypeEnum.Shadow:
+                        CurrentTask = ShadowModel.Default();
+                        break;
                 }
             }
 
@@ -72,10 +82,19 @@ namespace ScreenToGif.Windows.Other
                 case DefaultTaskModel.TaskTypeEnum.Delay:
                     MainPresenter.Content = new DelayPanel { DataContext = CurrentTask };
                     break;
+                case DefaultTaskModel.TaskTypeEnum.Progress:
+                    MainPresenter.Content = new ProgressPanel { DataContext = CurrentTask };
+                    break;
+                case DefaultTaskModel.TaskTypeEnum.Border:
+                    MainPresenter.Content = new BorderPanel { DataContext = CurrentTask };
+                    break;
+                case DefaultTaskModel.TaskTypeEnum.Shadow:
+                    MainPresenter.Content = new ShadowPanel { DataContext = CurrentTask };
+                    break;
             }
         }
 
-        private void Ok_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
+        private void Ok_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
             e.CanExecute = IsLoaded && TypeComboBox.SelectedIndex > 0;
         }

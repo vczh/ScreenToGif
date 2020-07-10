@@ -29,7 +29,6 @@ namespace ScreenToGif.Windows.Other
 
         private async void Feedback_Loaded(object sender, RoutedEventArgs e)
         {
-            StatusBand.Warning(LocalizationHelper.Get("S.Feedback.IssueBug.Info"));
             Cursor = Cursors.AppStarting;
             MainGrid.IsEnabled = false;
 
@@ -66,7 +65,11 @@ namespace ScreenToGif.Windows.Other
 
         private void PreviewButton_Click(object sender, RoutedEventArgs e)
         {
-            var preview = new FeedbackPreview { Html = BuildBody(TitleTextBox.Text, MessageTextBox.Text, MailTextBox.Text, IssueCheckBox.IsChecked == true, SuggestionCheckBox.IsChecked == true) };
+            var preview = new FeedbackPreview
+            {
+                Owner = this, 
+                Html = BuildBody(TitleTextBox.Text, MessageTextBox.Text, EmailTextBox.Text, IssueCheckBox.IsChecked == true, SuggestionCheckBox.IsChecked == true)
+            };
             preview.ShowDialog();
         }
 
@@ -124,13 +127,13 @@ namespace ScreenToGif.Windows.Other
             sb.Append("<html xmlns:msxsl=\"urn:schemas-microsoft-com:xslt\">");
             sb.Append("<head><meta content=\"en-us\" http-equiv=\"Content-Language\" />" +
                       "<meta content=\"text/html; charset=utf-16\" http-equiv=\"Content-Type\" />" +
-                      "<title>Screen To Gif - Feedback</title>" +
+                      "<title>ScreenToGif - Feedback</title>" +
                       "</head>");
 
             sb.AppendFormat("<style>{0}</style>", Util.Other.GetTextResource("ScreenToGif.Resources.Style.css"));
 
             sb.Append("<body>");
-            sb.AppendFormat("<h1>{0}</h1>", title);
+            sb.AppendFormat("<h1>{0}</h1>", (title ?? "").Length > 0 ? title : "Title of the feedback");
             sb.Append("<div id=\"content\"><div>");
             sb.Append("<h2>Overview</h2>");
             sb.Append("<div id=\"overview\"><table>");
@@ -143,13 +146,13 @@ namespace ScreenToGif.Windows.Other
             sb.Append("<th>Running</th>");
             sb.Append("<th>Version</th></tr>");
 
-            var format = new CultureInfo("pt-BR");
+            var culture = new CultureInfo("pt-BR");
 
             sb.AppendFormat("<tr><td class=\"textcentered\">{0}</td>", Environment.UserName);
             sb.AppendFormat("<td class=\"textcentered\">{0}</td>", Environment.MachineName);
-            sb.AppendFormat(format, "<td class=\"textcentered\">{0:g}</td>", Global.StartupDateTime);
-            sb.AppendFormat(format, "<td class=\"textcentered\">{0:g}</td>", DateTime.Now);
-            sb.AppendFormat(format, "<td class=\"textcentered\">{0:d':'hh':'mm':'ss}</td>", Global.StartupDateTime != DateTime.MinValue ? DateTime.Now - Global.StartupDateTime : TimeSpan.Zero);
+            sb.AppendFormat(culture, "<td class=\"textcentered\">{0:g}</td>", Global.StartupDateTime);
+            sb.AppendFormat(culture, "<td class=\"textcentered\">{0:g}</td>", DateTime.Now);
+            sb.AppendFormat(culture, "<td class=\"textcentered\">{0:d':'hh':'mm':'ss}</td>", Global.StartupDateTime != DateTime.MinValue ? DateTime.Now - Global.StartupDateTime : TimeSpan.Zero);
             sb.AppendFormat("<td class=\"textcentered\">{0}</td></tr>", Assembly.GetExecutingAssembly().GetName().Version.ToString(4));
 
             //Second overview row.
@@ -169,11 +172,13 @@ namespace ScreenToGif.Windows.Other
             sb.AppendFormat("<td class=\"textcentered\">{0}</td></tr>", Humanizer.BytesToString(status.TotalPhysicalMemory));
 
             //Third overview row.
-            sb.Append("<tr><th colspan=\"4\">E-mail</th>");
+            sb.Append("<tr><th colspan=\"3\">E-mail</th>");
+            sb.Append("<th>.Net Version</th>");
             sb.Append("<th>Issue?</th>");
             sb.Append("<th>Suggestion?</th></tr>");
 
-            sb.AppendFormat("<td colspan=\"4\" class=\"textcentered\">{0}</td>", email);
+            sb.AppendFormat("<td colspan=\"3\" class=\"textcentered\">{0}</td>", (email ?? "").Length > 0 ? email : "example@outlook.com");
+            sb.AppendFormat("<td class=\"textcentered\">{0}</td>", FrameworkHelper.QueryFrameworkVersion());
             sb.AppendFormat("<td class=\"textcentered\">{0}</td>", issue ? "Yes" : "No");
             sb.AppendFormat("<td class=\"textcentered\">{0}</td></tr></table></div></div>", suggestion ? "Yes" : "No");
 
@@ -190,6 +195,58 @@ namespace ScreenToGif.Windows.Other
                 sb.AppendFormat("<td class=\"textcentered\">{0}:{1} • {2}x{3}</td>", monitor.WorkingArea.Left, monitor.WorkingArea.Top, monitor.WorkingArea.Width, monitor.WorkingArea.Height);
                 sb.AppendFormat("<td class=\"textcentered\">{0}dpi / {1:#00}%</td>", monitor.Dpi, monitor.Dpi / 96d * 100d);
                 sb.AppendFormat("<td class=\"textcentered\">{0}</td></tr>", monitor.IsPrimary ? "Yes" : "No");
+            }
+
+            sb.Append("<table>");
+
+            //TODO: Show drawing of monitors, with the position of each window.
+            //sb.Append("<svg>" +
+            //          "<circle cx=\"40\" cy=\"40\" r=\"24\" style=\"stroke:#006600; fill:#00cc00\"/>" +
+            //          "<rect id=\"box\" x=\"0\" y=\"0\" width=\"50\" height=\"50\" style=\"stroke:#006600; fill:#00cc00\"/>" +
+            //          "</svg>");
+
+            //Drives.
+            sb.Append("<br><h2>Drives</h2><table>");
+            sb.Append("<tr><th>Root</th>");
+            sb.Append("<th>Used</th>");
+            sb.Append("<th>Free</th>");
+            sb.Append("<th>Total</th>");
+            sb.Append("<th>Format</th>");
+            sb.Append("<th>Type</th>");
+            sb.Append("<th>Ready?</th></tr>");
+
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                #region Try get the size
+
+                var total = 0L;
+                var available = 0L;
+                var format = "";
+
+                try
+                {
+                    total = drive.TotalSize;
+                    available = drive.AvailableFreeSpace;
+                    format = drive.DriveFormat;
+                }
+                catch (Exception e)
+                {
+                    //LogWriter.Log(e, "Not possible to get driver details");
+                }
+
+                #endregion
+
+                var used = total - available;
+                var usedPerc = Math.Round(Util.Other.CrossMultiplication(total, used, null), 1);
+                var avaiPerc = Math.Round(Util.Other.CrossMultiplication(total, available, null), 1);
+                
+                sb.AppendFormat("<td class=\"textcentered\">{0}</td>", drive.Name);
+                sb.AppendFormat("<td class=\"textRight\">({0} %) {1}</td>", usedPerc, Humanizer.BytesToString(used, "N1"));
+                sb.AppendFormat("<td class=\"textRight\">({0} %) {1}</td>", avaiPerc, Humanizer.BytesToString(available, "N1"));
+                sb.AppendFormat("<td class=\"textRight\">{0}</td>", Humanizer.BytesToString(total, "N1"));
+                sb.AppendFormat("<td class=\"textcentered\">{0}</td>", format);
+                sb.AppendFormat("<td class=\"textcentered\">{0}</td>", drive.DriveType);
+                sb.AppendFormat("<td class=\"textcentered\">{0}</td></tr>", drive.IsReady ? "Yes" : "No");
             }
 
             sb.Append("<table>");
@@ -212,21 +269,28 @@ namespace ScreenToGif.Windows.Other
 
             if (TitleTextBox.Text.Length == 0)
             {
-                StatusBand.Warning(FindResource("S.Feedback.Warning.Title") as string);
+                StatusBand.Warning(LocalizationHelper.Get("S.Feedback.Warning.Title"));
                 TitleTextBox.Focus();
                 return;
             }
 
             if (MessageTextBox.Text.Length == 0)
             {
-                StatusBand.Warning(FindResource("S.Feedback.Warning.Message") as string);
+                StatusBand.Warning(LocalizationHelper.Get("S.Feedback.Warning.Message"));
                 MessageTextBox.Focus();
+                return;
+            }
+
+            if (EmailTextBox.Text.Length == 0)
+            {
+                StatusBand.Warning(LocalizationHelper.Get("S.Feedback.Warning.Email"));
+                EmailTextBox.Focus();
                 return;
             }
 
             #endregion
 
-            StatusBand.Info(FindResource("S.Feedback.Sending").ToString());
+            StatusBand.Info(LocalizationHelper.Get("S.Feedback.Sending"));
 
             Cursor = Cursors.AppStarting;
             MainGrid.IsEnabled = false;
@@ -251,7 +315,7 @@ namespace ScreenToGif.Windows.Other
 
                 var title = TitleTextBox.Text;
                 var message = MessageTextBox.Text;
-                var email = MailTextBox.Text;
+                var email = EmailTextBox.Text;
                 var issue = IssueCheckBox.IsChecked == true;
                 var suggestion = SuggestionCheckBox.IsChecked == true;
 

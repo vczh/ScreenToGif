@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Runtime.Serialization.Json;
 using System.Text;
@@ -61,29 +62,44 @@ namespace ScreenToGif.Model
                     CanExecutePredicate = o =>
                     {
                         //True if all windows are not Recorders.
-                        return Application.Current.Windows.OfType<Window>().All(a => !(a is RecorderWindow));
+                        return Application.Current?.Windows.OfType<Window>().All(a => !(a is RecorderWindow)) ?? false;
                     },
                     ExecuteAction = a =>
                     {
                         var caller = a as Window;
-                        caller?.Hide();
+                        var editor = a as Editor;
+
+                        if (editor == null)
+                            caller?.Hide();
 
                         if (UserSettings.All.NewRecorder)
                         {
                             var recorderNew = new RecorderNew();
+                            //var recorderNew = new NewRecorder();
                             recorderNew.Closed += (sender, args) =>
                             {
                                 var window = sender as RecorderNew;
+                                //var window = sender as NewRecorder;
 
                                 if (window?.Project != null && window.Project.Any)
                                 {
-                                    ShowEditor(window.Project);
-                                    caller?.Close();
+                                    if (editor == null)
+                                    {
+                                        ShowEditor(window.Project);
+                                        caller?.Close();
+                                    }
+                                    else
+                                        editor.RecorderCallback(window.Project);
                                 }
                                 else
                                 {
-                                    caller?.Show();
-                                    CloseOrNot();
+                                    if (editor == null)
+                                    {
+                                        caller?.Show();
+                                        CloseOrNot();
+                                    }
+                                    else
+                                        editor.RecorderCallback(null);
                                 }
                             };
 
@@ -100,13 +116,23 @@ namespace ScreenToGif.Model
 
                             if (window?.Project != null && window.Project.Any)
                             {
-                                ShowEditor(window.Project);
-                                caller?.Close();
+                                if (editor == null)
+                                {
+                                    ShowEditor(window.Project);
+                                    caller?.Close();
+                                }
+                                else
+                                    editor.RecorderCallback(window.Project);
                             }
                             else
                             {
-                                caller?.Show();
-                                CloseOrNot();
+                                if (editor == null)
+                                {
+                                    caller?.Show();
+                                    CloseOrNot();
+                                }
+                                else
+                                    editor.RecorderCallback(null);
                             }
                         };
 
@@ -126,12 +152,15 @@ namespace ScreenToGif.Model
                     CanExecutePredicate = o =>
                     {
                         //True if all windows are not Recorders.
-                        return Application.Current.Windows.OfType<Window>().All(a => !(a is RecorderWindow));
+                        return Application.Current?.Windows.OfType<Window>().All(a => !(a is RecorderWindow)) ?? false;
                     },
                     ExecuteAction = a =>
                     {
                         var caller = a as Window;
-                        caller?.Hide();
+                        var editor = a as Editor;
+
+                        if (editor == null)
+                            caller?.Hide();
 
                         var recorder = new Windows.Webcam();
                         recorder.Closed += (sender, args) =>
@@ -140,13 +169,23 @@ namespace ScreenToGif.Model
 
                             if (window?.Project != null && window.Project.Any)
                             {
-                                ShowEditor(window.Project);
-                                caller?.Close();
+                                if (editor == null)
+                                {
+                                    ShowEditor(window.Project);
+                                    caller?.Close();
+                                }
+                                else
+                                    editor.RecorderCallback(window.Project);
                             }
                             else
                             {
-                                caller?.Show();
-                                CloseOrNot();
+                                if (editor == null)
+                                {
+                                    caller?.Show();
+                                    CloseOrNot();
+                                }
+                                else
+                                    editor.RecorderCallback(null);
                             }
                         };
 
@@ -166,12 +205,15 @@ namespace ScreenToGif.Model
                     CanExecutePredicate = o =>
                     {
                         //True if all windows are not Recorders.
-                        return Application.Current.Windows.OfType<Window>().All(a => !(a is RecorderWindow));
+                        return Application.Current?.Windows.OfType<Window>().All(a => !(a is RecorderWindow)) ?? false;
                     },
                     ExecuteAction = a =>
                     {
                         var caller = a as Window;
-                        caller?.Hide();
+                        var editor = a as Editor;
+
+                        if (editor == null)
+                            caller?.Hide();
 
                         var recorder = new Board();
                         recorder.Closed += (sender, args) =>
@@ -180,13 +222,23 @@ namespace ScreenToGif.Model
 
                             if (window?.Project != null && window.Project.Any)
                             {
-                                ShowEditor(window.Project);
-                                caller?.Close();
+                                if (editor == null)
+                                {
+                                    ShowEditor(window.Project);
+                                    caller?.Close();
+                                }
+                                else
+                                    editor.RecorderCallback(window.Project);
                             }
                             else
                             {
-                                caller?.Show();
-                                CloseOrNot();
+                                if (editor == null)
+                                {
+                                    caller?.Show();
+                                    CloseOrNot();
+                                }
+                                else
+                                    editor.RecorderCallback(null);
                             }
                         };
 
@@ -294,7 +346,7 @@ namespace ScreenToGif.Model
             {
                 return new RelayCommand
                 {
-                    CanExecutePredicate = a => true, //TODO: Always let this window opens or check if there's any other recorder active?
+                    CanExecutePredicate = a => true,
                     ExecuteAction = a =>
                     {
                         var trouble = Application.Current.Windows.OfType<Troubleshoot>().FirstOrDefault();
@@ -343,6 +395,58 @@ namespace ScreenToGif.Model
             }
         }
 
+        public ICommand TrayLeftClick
+        {
+            get
+            {
+                return new RelayCommand
+                {
+                    ExecuteAction = a => Interact(UserSettings.All.LeftClickAction, UserSettings.All.LeftOpenWindow)
+                };
+            }
+        }
+
+        public ICommand TrayDoubleLeftClick
+        {
+            get
+            {
+                return new RelayCommand
+                {
+                    ExecuteAction = a => Interact(UserSettings.All.DoubleLeftClickAction, UserSettings.All.DoubleLeftOpenWindow)
+                };
+            }
+        }
+
+        public ICommand TrayMiddleClick
+        {
+            get
+            {
+                return new RelayCommand
+                {
+                    ExecuteAction = a => Interact(UserSettings.All.MiddleClickAction, UserSettings.All.MiddleOpenWindow)
+                };
+            }
+        }
+
+        public ICommand PromptUpdate
+        {
+            get
+            {
+                return new RelayCommand
+                {
+                    ExecuteAction = a =>
+                    {
+                        if (Global.UpdateAvailable == null)
+                            return;
+
+                        //Try to install the update, closing the app if sucessful.
+                        if (InstallUpdate(true))
+                            Application.Current.Shutdown(69);
+                    }
+                };
+            }
+        }
+
         public ICommand ExitApplication
         {
             get
@@ -352,11 +456,11 @@ namespace ScreenToGif.Model
                     CanExecutePredicate = o =>
                     {
                         //TODO: Check if there's anything open or anything happening with editors.
-                        return Application.Current.Windows.OfType<RecorderWindow>().All(a => a.Stage != Stage.Recording);
+                        return Application.Current?.Windows.OfType<RecorderWindow>().All(a => a.Stage != Stage.Recording) ?? false;
                     },
                     ExecuteAction = a =>
                     {
-                        if (UserSettings.All.NotifyWhileClosingApp && !Dialog.Ask(LocalizationHelper.Get("Application.Exiting.Title"), LocalizationHelper.Get("Application.Exiting.Instruction"), LocalizationHelper.Get("Application.Exiting.Message")))
+                        if (UserSettings.All.NotifyWhileClosingApp && !Dialog.Ask(LocalizationHelper.Get("S.Exiting.Title"), LocalizationHelper.Get("S.Exiting.Instruction"), LocalizationHelper.Get("S.Exiting.Message")))
                             return;
 
                         Application.Current.Shutdown(69);
@@ -392,11 +496,10 @@ namespace ScreenToGif.Model
 
                 if (project != null)
                     editor.LoadProject(project, true, false);
-
-                editor.Activate();
             }
 
             Application.Current.MainWindow = editor;
+            editor.Activate();
         }
 
         private void CloseOrNot()
@@ -404,13 +507,162 @@ namespace ScreenToGif.Model
             //When closed, check if it's the last window, then close if it's the configured behavior.
             if (!UserSettings.All.ShowNotificationIcon || !UserSettings.All.KeepOpen)
             {
-                //We only need to check loaded windows that have content
+                //We only need to check loaded windows that have content, since any special window could be open.
                 if (Application.Current.Windows.Cast<Window>().Count(window => window.HasContent) == 0)
+                {
+                    //Install the available update on closing.
+                    if (UserSettings.All.InstallUpdates)
+                        InstallUpdate();
+
                     Application.Current.Shutdown(2);
+                }
             }
         }
 
-        internal void ClearTemporaryFilesTask()
+        private void Interact(int action, int open)
+        {
+            switch (action)
+            {
+                case 1: //Open a window.
+                {
+                    switch (open)
+                    {
+                        case 1: //Startup.
+                        {
+                            OpenLauncher.Execute(null);
+                            break;
+                        }
+                        case 2: //Recorder.
+                        {
+                            if (!OpenRecorder.CanExecute(null))
+                            {
+                                var rec = Application.Current.Windows.OfType<RecorderWindow>().FirstOrDefault();
+
+                                if (rec != null)
+                                {
+                                    if (rec.WindowState == WindowState.Minimized)
+                                        rec.WindowState = WindowState.Normal;
+
+                                    //Bring to foreground.
+                                    rec.Activate();
+                                    return;
+                                }
+                            }
+
+                            OpenRecorder.Execute(null);
+                            return;
+                        }
+                        case 3: //Webcam.
+                        {
+                            if (!OpenWebcamRecorder.CanExecute(null))
+                            {
+                                var rec = Application.Current.Windows.OfType<RecorderWindow>().FirstOrDefault();
+
+                                if (rec != null)
+                                {
+                                    if (rec.WindowState == WindowState.Minimized)
+                                        rec.WindowState = WindowState.Normal;
+
+                                    //Bring to foreground.
+                                    rec.Activate();
+                                    return;
+                                }
+                            }
+
+                            OpenWebcamRecorder.Execute(null);
+                            break;
+                        }
+                        case 4: //Board.
+                        {
+                            if (!OpenBoardRecorder.CanExecute(null))
+                            {
+                                var rec = Application.Current.Windows.OfType<RecorderWindow>().FirstOrDefault();
+
+                                if (rec != null)
+                                {
+                                    if (rec.WindowState == WindowState.Minimized)
+                                        rec.WindowState = WindowState.Normal;
+
+                                    //Bring to foreground.
+                                    rec.Activate();
+                                    return;
+                                }
+                            }
+
+                            OpenBoardRecorder.Execute(null);
+                            break;
+                        }
+                        case 5: //Editor.
+                        {
+                            OpenEditor.Execute(null);
+                            break;
+                        }
+                    }
+
+                    break;
+                }
+
+                case 2: //Minimize/restore all windows.
+                {
+                    var all = Application.Current.Windows.OfType<Window>().Where(w => w.Content != null).ToList();
+
+                    if (all.Count == 0)
+                    {
+                        Interact(1, open);
+                        return;
+                    }
+
+                    if (all.Any(n => n.WindowState != WindowState.Minimized))
+                    {
+                        //Minimize all windows.
+                        foreach (var window in all)
+                            window.WindowState = WindowState.Minimized;
+                    }
+                    else
+                    {
+                        //Restore all windows.
+                        foreach (var window in all)
+                            window.WindowState = WindowState.Normal;
+                    }
+
+                    break;
+                }
+
+                case 3: //Minimize all windows.
+                {
+                    var all = Application.Current.Windows.OfType<Window>().Where(w => w.Content != null).ToList();
+
+                    if (all.Count == 0)
+                    {
+                        Interact(1, open);
+                        return;
+                    }
+
+                    foreach (var window in all)
+                        window.WindowState = WindowState.Minimized;
+
+                    break;
+                }
+
+                case 4: //Restore all windows.
+                {
+                    var all = Application.Current.Windows.OfType<Window>().Where(w => w.Content != null).ToList();
+
+                    if (all.Count == 0)
+                    {
+                        Interact(1, open);
+                        return;
+                    }
+
+                    foreach (var window in all)
+                        window.WindowState = WindowState.Normal;
+
+                    break;
+                }
+            }
+        }
+
+        internal void ClearTemporaryFiles()
         {
             try
             {
@@ -419,6 +671,24 @@ namespace ScreenToGif.Model
 
                 Global.IsCurrentlyDeletingFiles = true;
 
+                ClearRecordingCache();
+                ClearUpdateCache();
+            }
+            catch (Exception ex)
+            {
+                LogWriter.Log(ex, "Automatic clean up");
+            }
+            finally
+            {
+                Global.IsCurrentlyDeletingFiles = false;
+                CheckDiskSpace();
+            }
+        }
+
+        private void ClearRecordingCache()
+        {
+            try
+            {
                 var path = Path.Combine(UserSettings.All.TemporaryFolderResolved, "ScreenToGif", "Recording");
 
                 if (!Directory.Exists(path))
@@ -428,7 +698,7 @@ namespace ScreenToGif.Model
                     .Where(w => (DateTime.Now - w.CreationTime).TotalDays > (UserSettings.All.AutomaticCleanUpDays > 0 ? UserSettings.All.AutomaticCleanUpDays : 5)).ToList();
 
                 //var list = Directory.GetDirectories(path).Select(x => new DirectoryInfo(x));
-                
+
                 foreach (var folder in list)
                 {
                     if (MutexList.IsInUse(folder.Name))
@@ -439,12 +709,28 @@ namespace ScreenToGif.Model
             }
             catch (Exception ex)
             {
-                LogWriter.Log(ex, "Automatic clean up");
+                LogWriter.Log(ex, "Automatic clean up - Recordings");
             }
-            finally
+        }
+
+        private void ClearUpdateCache()
+        {
+            try
             {
-                Global.IsCurrentlyDeletingFiles = false;
-                CheckDiskSpace();
+                var path = Path.Combine(UserSettings.All.TemporaryFolderResolved, "ScreenToGif", "Updates");
+
+                if (!Directory.Exists(path))
+                    return;
+
+                var list = Directory.EnumerateFiles(path).Select(x => new FileInfo(x))
+                    .Where(w => (DateTime.Now - w.CreationTime).TotalDays > (UserSettings.All.AutomaticCleanUpDays > 0 ? UserSettings.All.AutomaticCleanUpDays : 5)).ToList();
+
+                foreach (var file in list)
+                    File.Delete(file.FullName);
+            }
+            catch (Exception ex)
+            {
+                LogWriter.Log(ex, "Automatic clean up - Updates");
             }
         }
 
@@ -462,11 +748,11 @@ namespace ScreenToGif.Model
                 Global.AvailableDiskSpace = drive.AvailableFreeSpace;
 
                 //If there's less than 2GB left.
-                if (drive.AvailableFreeSpace < 2000000000)
-                    Application.Current.Dispatcher.Invoke(() => NotificationManager.AddNotification(LocalizationHelper.GetWithFormat("Editor.Warning.LowSpace", Math.Round(Global.AvailableDiskSpacePercentage, 2)),
-                        StatusType.Warning, "disk", () => App.MainViewModel.OpenOptions.Execute(5)));
+                if (drive.AvailableFreeSpace < 2_000_000_000)
+                    Application.Current.Dispatcher?.Invoke(() => NotificationManager.AddNotification(LocalizationHelper.GetWithFormat("S.Editor.Warning.LowSpace", Math.Round(Global.AvailableDiskSpacePercentage, 2)),
+                        StatusType.Warning, "disk", () => App.MainViewModel.OpenOptions.Execute(Options.TempFilesIndex)));
                 else
-                    Application.Current.Dispatcher.Invoke(() => NotificationManager.RemoveNotification(r => r.Tag == "disk"));
+                    Application.Current.Dispatcher?.Invoke(() => NotificationManager.RemoveNotification(r => r.Tag == "disk"));
             }
             catch (Exception ex)
             {
@@ -513,82 +799,288 @@ namespace ScreenToGif.Model
             }
         }
 
-        internal void UpdateTask()
+        internal async void CheckForUpdates()
         {
-            Global.UpdateModel = null;
+            Global.UpdateAvailable = null;
+
+#if UWP
+            return;
+#endif
 
             if (!UserSettings.All.CheckForUpdates)
                 return;
 
-#if !UWP
+            //Try checking for the update on Github first then fallbacks to Fosshub.
+            if (!await CheckOnGithub())
+                await CheckOnFosshub();
+        }
 
+        private async Task<bool> CheckOnGithub()
+        {
             try
             {
+                //If the app was installed by Chocolatey, avoid this.
+                if (AppDomain.CurrentDomain.BaseDirectory.EndsWith(@"Chocolatey\lib\screentogif\content\"))
+                    return true;
+
+                #region GraphQL equivalent
+
+                //query {
+                //    repository(owner: "NickeManarin", name: "ScreenToGif") {
+                //        releases(first: 1, orderBy: { field: CREATED_AT, direction: DESC}) {
+                //            nodes {
+                //                name
+                //                tagName
+                //                createdAt
+                //                url
+                //                isPrerelease
+                //                description
+                //                releaseAssets(last: 2) {
+                //                    nodes {
+                //                        name
+                //                        downloadCount
+                //                        downloadUrl
+                //                        size
+                //                    }
+                //                }
+                //            }
+                //        }
+                //    }
+                //}
+
+                #endregion
+
                 var request = (HttpWebRequest)WebRequest.Create("https://api.github.com/repos/NickeManarin/ScreenToGif/releases/latest");
                 request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14393";
                 request.Proxy = WebHelper.GetProxy();
 
-                var response = (HttpWebResponse)request.GetResponse();
+                var response = (HttpWebResponse)await request.GetResponseAsync();
 
                 using (var resultStream = response.GetResponseStream())
                 {
                     if (resultStream == null)
-                        return;
+                        return false;
 
                     using (var reader = new StreamReader(resultStream))
                     {
-                        var result = reader.ReadToEnd();
-
+                        var result = await reader.ReadToEndAsync();
                         var jsonReader = JsonReaderWriterFactory.CreateJsonReader(Encoding.UTF8.GetBytes(result), new System.Xml.XmlDictionaryReaderQuotas());
-
                         var release = XElement.Load(jsonReader);
 
                         var version = Version.Parse(release.XPathSelectElement("tag_name")?.Value ?? "0.1");
 
                         if (version.Major == 0 || version <= Assembly.GetExecutingAssembly().GetName().Version)
-                            return;
+                           return true;
 
-                        Global.UpdateModel = new UpdateModel
+                        Global.UpdateAvailable = new UpdateAvailable
                         {
                             Version = version,
                             Description = release.XPathSelectElement("body")?.Value ?? "",
+                            PortableDownloadUrl = release.XPathSelectElement("assets/item[1]/browser_download_url")?.Value ?? "",
+                            PortableSize = Convert.ToInt64(release.XPathSelectElement("assets/item[1]/size")?.Value ?? "0"),
                             InstallerDownloadUrl = release.XPathSelectElement("assets/item[2]/browser_download_url")?.Value ?? "",
                             InstallerSize = Convert.ToInt64(release.XPathSelectElement("assets/item[2]/size")?.Value ?? "0"),
-                            PortableDownloadUrl = release.XPathSelectElement("assets/item[1]/browser_download_url")?.Value ?? "",
-                            PortableSize = Convert.ToInt64(release.XPathSelectElement("assets/item[1]/size")?.Value ?? "0")
+                            InstallerName = release.XPathSelectElement("assets/item[2]/name")?.Value ?? "ScreenToGif.Setup.msi",
                         };
 
-                        Application.Current.Dispatcher.Invoke(() => NotificationManager.AddNotification(string.Format(LocalizationHelper.Get("Update.NewRelease.Verbose"), Global.UpdateModel.Version), StatusType.Update, "update", UpdateAction));
+                        Application.Current.Dispatcher?.BeginInvoke(new Action(() => NotificationManager.AddNotification(string.Format(LocalizationHelper.Get("S.Updater.NewRelease.Info"), 
+                            Global.UpdateAvailable.Version), StatusType.Update, "update", PromptUpdate)));
+
+                        //Download update to be installed when the app closes.
+                        if (UserSettings.All.InstallUpdates && !string.IsNullOrEmpty(Global.UpdateAvailable.InstallerDownloadUrl))
+                            await DownloadUpdate();
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogWriter.Log(ex, "Impossible to check for updates on Github");
+                return false;
+            }
+            finally
+            {
+                GC.Collect();
+            }
+        }
+
+        private async Task CheckOnFosshub()
+        {
+            try
+            {
+                var proxy = WebHelper.GetProxy();
+                var handler = new HttpClientHandler
+                {
+                    Proxy = proxy,
+                    UseProxy = proxy != null,
+                };
+
+                using (var client = new HttpClient(handler) { BaseAddress = new Uri("https://www.fosshub.com") })
+                {
+                    using (var response = await client.GetAsync("/feed/5bfc6fce8c9fe8186f809d24.json"))
+                    {
+                        var result = await response.Content.ReadAsStringAsync();
+
+                        using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(result)))
+                        {
+                            var ser = new DataContractJsonSerializer(typeof(FosshubResponse));
+                            var obj = ser.ReadObject(ms) as FosshubResponse;
+
+                            if (obj?.Release == null)
+                                return;
+
+                            var version = Version.Parse(obj.Release.Items[0].Version ?? "0.1");
+
+                            if (version.Major == 0 || version <= Assembly.GetExecutingAssembly().GetName().Version)
+                                return;
+
+                            Global.UpdateAvailable = new UpdateAvailable
+                            {
+                                IsFromGithub = false,
+                                Version = version,
+                                PortableDownloadUrl = obj.Release.Items.FirstOrDefault(f => f.Title.EndsWith(".zip"))?.Link,
+                                InstallerDownloadUrl = obj.Release.Items.FirstOrDefault(f => f.Title.EndsWith(".msi"))?.Link,
+                            };
+
+                            //With Fosshub, the download must be manual. 
+                            Application.Current.Dispatcher?.BeginInvoke(new Action(() => NotificationManager.AddNotification(string.Format(LocalizationHelper.Get("S.Updater.NewRelease.Info"), Global.UpdateAvailable.Version), StatusType.Update, "update", PromptUpdate)));
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogWriter.Log(ex, "Check for update task");
+                LogWriter.Log(ex, "Impossible to check for updates on Fosshub");
             }
-
-#endif
-
-            GC.Collect();
+            finally
+            {
+                GC.Collect();
+            }
         }
 
-        internal void UpdateAction()
+        internal async Task<bool> DownloadUpdate()
         {
-            if (Global.UpdateModel == null)
-                return;
-
-            var download = new DownloadDialog();
-            var result = download.ShowDialog();
-
-            if (result.HasValue && result.Value)
+            try
             {
-                NotificationManager.RemoveNotification(s => s.Kind == StatusType.Update);
+                lock (UserSettings.Lock)
+                {
+                    if (string.IsNullOrWhiteSpace(UserSettings.All.TemporaryFolderResolved) || Global.UpdateAvailable.IsDownloading)
+                        return false;
 
-                //TODO: Check if possible to close.
+                    var folder = Path.Combine(UserSettings.All.TemporaryFolderResolved, "ScreenToGif", "Updates");
 
-                if (Dialog.Ask("ScreenToGif", LocalizationHelper.Get("Update.CloseThis"), LocalizationHelper.Get("Update.CloseThis.Detail")))
-                    Application.Current.Shutdown(69);
+                    if (!Directory.Exists(folder))
+                        Directory.CreateDirectory(folder);
+
+                    Global.UpdateAvailable.InstallerPath = Path.Combine(folder, Global.UpdateAvailable.InstallerName);
+
+                    //Check if installer was alread downloaded.
+                    if (File.Exists(Global.UpdateAvailable.InstallerPath))
+                    {
+                        //Minor issue, if for some reason, the update has the same size, this won't work properly. I would need to check a hash.
+                        if (GetSize(Global.UpdateAvailable.InstallerPath) == Global.UpdateAvailable.InstallerSize)
+                            return false;
+
+                        File.Delete(Global.UpdateAvailable.InstallerPath);
+                    }
+                
+                    Global.UpdateAvailable.IsDownloading = true;
+                }
+                
+                using (var webClient = new WebClient())
+                {
+                    webClient.Credentials = CredentialCache.DefaultNetworkCredentials;
+                    webClient.Proxy = WebHelper.GetProxy();
+
+                    await webClient.DownloadFileTaskAsync(new Uri(Global.UpdateAvailable.InstallerDownloadUrl), Global.UpdateAvailable.InstallerPath);
+                }
+                
+                return true;
             }
+            catch (Exception ex)
+            {
+                LogWriter.Log(ex, "Impossible to automatically download update");
+                return false;
+            }
+            finally
+            {
+                Global.UpdateAvailable.IsDownloading = false;
+            }
+        }
+
+        internal bool InstallUpdate(bool wasPromptedManually = false)
+        {
+            try
+            {
+                //No new release available.
+                if (Global.UpdateAvailable == null)
+                    return false;
+
+                //TODO: Check if Windows is not turning off.
+
+                //Prompt if:
+                //Not configured to download the update automatically OR
+                //Configured to download but set to prompt anyway OR
+                //Download not completed (perharps because the notification was triggered by a query on Fosshub).
+                if (UserSettings.All.PromptToInstall || !UserSettings.All.InstallUpdates || string.IsNullOrWhiteSpace(Global.UpdateAvailable.InstallerPath))
+                {
+                    var download = new DownloadDialog { WasPromptedManually = wasPromptedManually };
+                    var result = download.ShowDialog();
+
+                    if (!result.HasValue || !result.Value)
+                        return false;
+                }
+
+                //Only try to install if the update was downloaded.
+                if (!File.Exists(Global.UpdateAvailable.InstallerPath))
+                    return false;
+
+                var files = Directory.EnumerateFiles(AppDomain.CurrentDomain.BaseDirectory).ToList();
+                var isInstaller = files.Any(x => x.ToLowerInvariant().EndsWith("screentogif.visualelementsmanifest.xml"));
+                var hasSharpDx = files.Any(x => x.ToLowerInvariant().EndsWith("sharpdx.dll"));
+                var hasGifski = files.Any(x => x.ToLowerInvariant().EndsWith("gifski.dll"));
+                var hasMenuShortcut = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "ScreenToGif.lnk"));
+                var hasDesktopShortcut = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Desktop", "ScreenToGif.lnk"));
+
+                //MsiExec does not like relative paths.
+                var isRelative = !string.IsNullOrWhiteSpace(Global.UpdateAvailable.InstallerPath) && !Path.IsPathRooted(Global.UpdateAvailable.InstallerPath);
+                var nonRoot = isRelative ? Path.GetFullPath(Global.UpdateAvailable.InstallerPath) : Global.UpdateAvailable.InstallerPath;
+
+                //msiexec /i PATH INSTALLDIR="" INSTALLAUTOMATICALLY=yes INSTALLPORTABLE=No ADDLOCAL=Binary
+                //msiexec /a PATH TARGETDIR="" INSTALLAUTOMATICALLY=yes INSTALLPORTABLE=yes ADDLOCAL=Binary
+
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "msiexec",
+                    Arguments = $" {(isInstaller ? "/i" : "/a")} \"{nonRoot}\"" +
+                                $" {(isInstaller ? "INSTALLDIR" : "TARGETDIR")}=\"{AppDomain.CurrentDomain.BaseDirectory}\" INSTALLAUTOMATICALLY=yes INSTALLPORTABLE={(isInstaller ? "no" : "yes")}" +
+                                $" ADDLOCAL=Binary{(isInstaller ? ",Auxiliar" : "")}{(hasSharpDx ? ",SharpDX" : "")}{(hasGifski ? ",Gifski" : "")}" +
+                                $" {(wasPromptedManually ? "RUNAFTER=yes" : "")}" +
+                                (isInstaller ? $" INSTALLDESKTOPSHORTCUT={(hasDesktopShortcut ? "yes" : "no")} INSTALLSHORTCUT={(hasMenuShortcut ? "yes" : "no")}" : ""),
+                    Verb = UserSettings.All.ForceUpdateAsAdmin ? "runas" : ""
+                };
+
+                using (var process = new Process { StartInfo = startInfo })
+                    process.Start();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogWriter.Log(ex, "Impossible to automatically install update");
+
+                ErrorDialog.Ok("ScreenToGif", "It was not possible to install the update", ex.Message, ex);
+                return false;
+            }
+        }
+
+        private long GetSize(string path)
+        {
+            var info = new FileInfo(path);
+            info.Refresh();
+
+            return info.Length;
         }
 
         #endregion

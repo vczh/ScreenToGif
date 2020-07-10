@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using ScreenToGif.Util;
@@ -29,7 +28,7 @@ namespace ScreenToGif.Windows.Other
             DetectMonitors();
         }
 
-        private void HyperlinkMove_Click(object sender, RoutedEventArgs e)
+        private async void HyperlinkMove_Click(object sender, RoutedEventArgs e)
         {
             var monitor = Monitor.AllMonitorsScaled(this.Scale()).FirstOrDefault(f => f.IsPrimary);
 
@@ -51,7 +50,7 @@ namespace ScreenToGif.Windows.Other
                 if (window is RecorderNew newRecorder)
                 {
                     if (newRecorder.Stage == Stage.Recording)
-                        newRecorder.RecordPause();
+                        await newRecorder.RecordPause();
 
                     //I need to adjust to the Left/Top Bounds since the recorder ocupies the all windows.
 
@@ -81,7 +80,7 @@ namespace ScreenToGif.Windows.Other
                 if (window is Recorder recorder)
                 {
                     if (recorder.Stage == Stage.Recording)
-                        recorder.RecordPause();
+                        await recorder.RecordPause();
                 }
 
                 if (monitor.Bounds.Top > top)
@@ -164,7 +163,7 @@ namespace ScreenToGif.Windows.Other
                         left = Canvas.GetLeft(newRecorder.MainBorder) + newRecorder.Left;
                         width = newRecorder.MainBorder.ActualWidth;
                         height = newRecorder.MainBorder.ActualHeight;
-                        title = LocalizationHelper.Get("Recorder");
+                        title = LocalizationHelper.Get("S.StartUp.Recorder");
                     }
                     
                     minLeft = Math.Min(minLeft, left);
@@ -224,7 +223,7 @@ namespace ScreenToGif.Windows.Other
                             {
                                 VerticalAlignment = VerticalAlignment.Center,
                                 Padding = new Thickness(2),
-                                Text = LocalizationHelper.Get("Recorder")
+                                Text = LocalizationHelper.Get("S.StartUp.Recorder")
                             }
                         }
                     };
@@ -256,7 +255,7 @@ namespace ScreenToGif.Windows.Other
                             {
                                 VerticalAlignment = VerticalAlignment.Center,
                                 Padding = new Thickness(2),
-                                Text = LocalizationHelper.Get("Recorder") + " 2",
+                                Text = LocalizationHelper.Get("S.StartUp.Recorder") + " 2",
                                 Foreground = TryFindResource("Element.Foreground") as SolidColorBrush ?? Brushes.Black,
                             }
                         }
@@ -291,7 +290,7 @@ namespace ScreenToGif.Windows.Other
                             {
                                 VerticalAlignment = VerticalAlignment.Center,
                                 Padding = new Thickness(2),
-                                Text = LocalizationHelper.Get("Editor"),
+                                Text = LocalizationHelper.Get("S.StartUp.Editor"),
                                 Foreground = TryFindResource("Element.Foreground") as SolidColorBrush ?? Brushes.Black,
                             }
                         }
@@ -324,7 +323,7 @@ namespace ScreenToGif.Windows.Other
                             {
                                 VerticalAlignment = VerticalAlignment.Center,
                                 Padding = new Thickness(2),
-                                Text = (LocalizationHelper.Get("Title.StartUp") ?? "").Remove("ScreenToGif - "),
+                                Text = (LocalizationHelper.Get("S.StartUp.Title") ?? "").Remove("ScreenToGif - "),
                                 Foreground = TryFindResource("Element.Foreground") as SolidColorBrush ?? Brushes.Black,
                             }
                         }
@@ -373,7 +372,7 @@ namespace ScreenToGif.Windows.Other
             var height = maxY - minY;
 
             var group = new TransformGroup();
-            group.Children.Add(new TranslateTransform(-minX, minY));
+            group.Children.Add(new TranslateTransform(-minX, -minY));
             group.Children.Add(new ScaleTransform(canvas.ActualWidth / width, canvas.ActualHeight / height));
             canvas.RenderTransform = group;
         }

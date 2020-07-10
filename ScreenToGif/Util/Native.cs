@@ -2,12 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Windows;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
@@ -32,7 +34,7 @@ namespace ScreenToGif.Util
 
         internal const int DiNormal = 0x0003;
 
-        internal const int MonitorinfofPrimary = 0x00000001;
+        internal const int MonitorinfoPrimary = 0x00000001;
 
         internal const int StateSystemUnavailable = 0x0001;
         internal const int StateSystemInvisible = 0x8000;
@@ -109,7 +111,7 @@ namespace ScreenToGif.Util
             public IntPtr hbmMask;  // (HBITMAP) Specifies the icon bitmask bitmap. If this structure defines a black and white icon, 
             public IntPtr hbmColor; // (HBITMAP) Handle to the icon color bitmap. This member can be optional if this 
         }
-
+        
         [StructLayout(LayoutKind.Sequential)]
         internal struct PointW
         {
@@ -146,6 +148,7 @@ namespace ScreenToGif.Util
         ///source rectangle is to be combined with the color data for the destination
         ///rectangle to achieve the final color.
         ///</summary>
+        [Flags]
         internal enum CopyPixelOperation
         {
             NoMirrorBitmap = -2147483648,
@@ -294,7 +297,7 @@ namespace ScreenToGif.Util
         [Flags]
         private enum KnownFolderFlags : uint
         {
-            SimpleIDList = 0x00000100,
+            SimpleIdList = 0x00000100,
             NotParentRelative = 0x00000200,
             DefaultPath = 0x00000400,
             Init = 0x00000800,
@@ -435,15 +438,54 @@ namespace ScreenToGif.Util
         [StructLayout(LayoutKind.Sequential)]
         internal struct WindowInfo
         {
+            /// <summary>
+            /// The size of the structure, in bytes. The caller must set this member to sizeof(WINDOWINFO).
+            /// </summary>
             internal uint cbSize;
+
+            /// <summary>
+            /// The coordinates of the window.
+            /// </summary>
             internal Rect rcWindow;
+
+            /// <summary>
+            /// The coordinates of the client area.
+            /// </summary>
             internal Rect rcClient;
+
+            /// <summary>
+            /// The window styles. For a table of window styles, see Window Styles (https://docs.microsoft.com/en-us/windows/win32/winmsg/window-styles).
+            /// </summary>
             internal uint dwStyle;
+
+            /// <summary>
+            /// The extended window styles. For a table of extended window styles, see Extended Window Styles (https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles).
+            /// </summary>
             internal uint dwExStyle;
+
+            /// <summary>
+            /// The window status. If this member is WS_ACTIVECAPTION (0x0001), the window is active. Otherwise, this member is zero.
+            /// </summary>
             internal uint dwWindowStatus;
+
+            /// <summary>
+            /// The width of the window border, in pixels.
+            /// </summary>
             internal uint cxWindowBorders;
+
+            /// <summary>
+            /// The height of the window border, in pixels.
+            /// </summary>
             internal uint cyWindowBorders;
+
+            /// <summary>
+            /// The window class atom (see RegisterClass).
+            /// </summary>
             internal ushort atomWindowType;
+
+            /// <summary>
+            /// The Windows version of the application that created the window.
+            /// </summary>
             internal ushort wCreatorVersion;
 
             internal WindowInfo(bool? filler) : this()
@@ -967,7 +1009,6 @@ namespace ScreenToGif.Util
         /// </summary>
         public delegate IntPtr WindowProcedureHandler(IntPtr hwnd, uint uMsg, IntPtr wparam, IntPtr lparam);
 
-
         /// <summary>
         /// Win API WNDCLASS struct - represents a single window.
         /// Used to receive window messages.
@@ -985,6 +1026,259 @@ namespace ScreenToGif.Util
             public IntPtr hbrBackground;
             [MarshalAs(UnmanagedType.LPWStr)] public string lpszMenuName;
             [MarshalAs(UnmanagedType.LPWStr)] public string lpszClassName;
+        }
+
+        internal enum ShowWindowCommands
+        {
+            /// <summary>
+            /// Hides the window and activates another window.
+            /// </summary>
+            Hide = 0,
+            /// <summary>
+            /// Activates and displays a window. If the window is minimized or
+            /// maximized, the system restores it to its original size and position.
+            /// An application should specify this flag when displaying the window
+            /// for the first time.
+            /// </summary>
+            Normal = 1,
+            /// <summary>
+            /// Activates the window and displays it as a minimized window.
+            /// </summary>
+            ShowMinimized = 2,
+            /// <summary>
+            /// Maximizes the specified window.
+            /// </summary>
+            Maximize = 3, // is this the right value?
+            /// <summary>
+            /// Activates the window and displays it as a maximized window.
+            /// </summary>      
+            ShowMaximized = 3,
+            /// <summary>
+            /// Displays a window in its most recent size and position. This value
+            /// is similar to <see cref="ShowWindowCommands.Normal"/>, except
+            /// the window is not activated.
+            /// </summary>
+            ShowNoActivate = 4,
+            /// <summary>
+            /// Activates the window and displays it in its current size and position.
+            /// </summary>
+            Show = 5,
+            /// <summary>
+            /// Minimizes the specified window and activates the next top-level
+            /// window in the Z order.
+            /// </summary>
+            Minimize = 6,
+            /// <summary>
+            /// Displays the window as a minimized window. This value is similar to
+            /// <see cref="ShowWindowCommands.ShowMinimized"/>, except the
+            /// window is not activated.
+            /// </summary>
+            ShowMinNoActive = 7,
+            /// <summary>
+            /// Displays the window in its current size and position. This value is
+            /// similar to <see cref="ShowWindowCommands.Show"/>, except the
+            /// window is not activated.
+            /// </summary>
+            ShowNa = 8,
+            /// <summary>
+            /// Activates and displays the window. If the window is minimized or
+            /// maximized, the system restores it to its original size and position.
+            /// An application should specify this flag when restoring a minimized window.
+            /// </summary>
+            Restore = 9,
+            /// <summary>
+            /// Sets the show state based on the SW_* value specified in the
+            /// STARTUPINFO structure passed to the CreateProcess function by the
+            /// program that started the application.
+            /// </summary>
+            ShowDefault = 10,
+            /// <summary>
+            ///  <b>Windows 2000/XP:</b> Minimizes a window, even if the thread
+            /// that owns the window is not responding. This flag should only be
+            /// used when minimizing windows from a different thread.
+            /// </summary>
+            ForceMinimize = 11
+        }
+
+        /// <summary>
+        /// Contains information about the placement of a window on the screen.
+        /// </summary>
+        [Serializable]
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct WindowPlacement
+        {
+            /// <summary>
+            /// The length of the structure, in bytes. Before calling the GetWindowPlacement or SetWindowPlacement functions, set this member to sizeof(WINDOWPLACEMENT).
+            /// <para>
+            /// GetWindowPlacement and SetWindowPlacement fail if this member is not set correctly.
+            /// </para>
+            /// </summary>
+            public int Length;
+
+            /// <summary>
+            /// Specifies flags that control the position of the minimized window and the method by which the window is restored.
+            /// </summary>
+            public int Flags;
+
+            /// <summary>
+            /// The current show state of the window.
+            /// </summary>
+            public ShowWindowCommands ShowCmd;
+
+            /// <summary>
+            /// The coordinates of the window's upper-left corner when the window is minimized.
+            /// </summary>
+            public Point MinPosition;
+
+            /// <summary>
+            /// The coordinates of the window's upper-left corner when the window is maximized.
+            /// </summary>
+            public Point MaxPosition;
+
+            /// <summary>
+            /// The window's coordinates when the window is in the restored position.
+            /// </summary>
+            public Rect NormalPosition;
+
+            /// <summary>
+            /// Gets the default (empty) value.
+            /// </summary>
+            public static WindowPlacement Default
+            {
+                get
+                {
+                    var result = new WindowPlacement();
+                    result.Length = Marshal.SizeOf(result);
+                    return result;
+                }
+            }
+        }
+
+        public enum BitmapCompressionMode : uint
+        {
+            BI_RGB = 0,
+            BI_RLE8 = 1,
+            BI_RLE4 = 2,
+            BI_BITFIELDS = 3,
+            BI_JPEG = 4,
+            BI_PNG = 5
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct BitmapInfoHeader
+        {
+            public uint biSize;
+            public int biWidth;
+            public int biHeight;
+            public ushort biPlanes;
+            public ushort biBitCount;
+            public BitmapCompressionMode biCompression;
+            public uint biSizeImage;
+            public int biXPelsPerMeter;
+            public int biYPelsPerMeter;
+            public uint biClrUsed;
+            public uint biClrImportant;
+
+            public BitmapInfoHeader Init()
+            {
+                return new BitmapInfoHeader { biSize = (uint)Marshal.SizeOf(this) };
+            }
+        }
+
+        /// <summary>
+        /// The BITMAP structure defines the type, width, height, color format, and bit values of a bitmap.
+        /// </summary>
+        [Serializable]
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Bitmap
+        {
+            /// <summary>
+            /// The bitmap type. This member must be zero.
+            /// </summary>
+            public int bmType;
+
+            /// <summary>
+            /// The width, in pixels, of the bitmap. The width must be greater than zero.
+            /// </summary>
+            public int bmWidth;
+
+            /// <summary>
+            /// The height, in pixels, of the bitmap. The height must be greater than zero.
+            /// </summary>
+            public int bmHeight;
+
+            /// <summary>
+            /// The number of bytes in each scan line. This value must be divisible by 2, because the system assumes that the bit 
+            /// values of a bitmap form an array that is word aligned.
+            /// </summary>
+            public int bmWidthBytes;
+
+            /// <summary>
+            /// The count of color planes.
+            /// </summary>
+            public int bmPlanes;
+
+            /// <summary>
+            /// The number of bits required to indicate the color of a pixel.
+            /// </summary>
+            public int bmBitsPixel;
+
+            /// <summary>
+            /// A pointer to the location of the bit values for the bitmap. The bmBits member must be a pointer to an array of 
+            /// character (1-byte) values.
+            /// </summary>
+            public IntPtr bmBits;
+        }
+
+        [Flags]
+        public enum LocalMemoryFlags
+        {
+            LMEM_FIXED = 0x0000,
+            LMEM_MOVEABLE = 0x0002,
+            LMEM_NOCOMPACT = 0x0010,
+            LMEM_NODISCARD = 0x0020,
+            LMEM_ZEROINIT = 0x0040,
+            LMEM_MODIFY = 0x0080,
+            LMEM_DISCARDABLE = 0x0F00,
+            LMEM_VALID_FLAGS = 0x0F72,
+            LMEM_INVALID_HANDLE = 0x8000,
+            LHND = (LMEM_MOVEABLE | LMEM_ZEROINIT),
+            LPTR = (LMEM_FIXED | LMEM_ZEROINIT),
+            NONZEROLHND = (LMEM_MOVEABLE),
+            NONZEROLPTR = (LMEM_FIXED)
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 2)]
+        public struct BitmapFileHeader
+        {
+            public ushort bfType;
+            public uint bfSize;
+            public ushort bfReserved1;
+            public ushort bfReserved2;
+            public uint bfOffBits;
+        }
+
+        public enum DibColorMode : uint
+        {
+            DibRgbColors = 0,
+            DibPalColors = 1
+        }
+
+        internal enum ShowWindowEnum
+        {
+            Hide = 0,
+            ShowNormal = 1,
+            ShowMinimized = 2,
+            ShowMaximized = 3, //Same value as Maximize.
+            Maximize = 3,
+            ShowNormalNoActivate = 4,
+            Show = 5,
+            Minimize = 6,
+            ShowMinNoActivate = 7,
+            ShowNoActivate = 8,
+            Restore = 9,
+            ShowDefault = 10,
+            ForceMinimized = 11
         }
 
         #endregion
@@ -1071,8 +1365,45 @@ namespace ScreenToGif.Util
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool BitBlt([In] IntPtr hdc, int nXDest, int nYDest, int nWidth, int nHeight, [In] IntPtr hdcSrc, int nXSrc, int nYSrc, CopyPixelOperation dwRop);
 
+        [DllImport("gdi32.dll", EntryPoint = "StretchBlt", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool StretchBlt([In] IntPtr hdc, int nXDest, int nYDest, int nWidthDest, int nHeightDest, [In] IntPtr hdcSrc, int nXSrc, int nYSrc, int nWidthSource, int nHeightSource, CopyPixelOperation dwRop);
+
+        /// <summary>
+        /// pbmi was BitmapInfo.
+        /// </summary>
+        /// <param name="hdc"></param>
+        /// <param name="pbmi"></param>
+        /// <param name="pila"></param>
+        /// <param name="ppvBits"></param>
+        /// <param name="hSection"></param>
+        /// <param name="dwOffset"></param>
+        /// <returns></returns>
+        [DllImport("gdi32.dll")]
+        internal static extern IntPtr CreateDIBSection(IntPtr hdc, [In] ref IntPtr pbmi, uint pila, out IntPtr ppvBits, IntPtr hSection, uint dwOffset);
+
+        /// <summary>
+        /// Retrieves the bits of the specified compatible bitmap and copies them into a buffer as a DIB using the specified format.
+        /// </summary>
+        /// <param name="hdc">A handle to the device context.</param>
+        /// <param name="hbmp">A handle to the bitmap. This must be a compatible bitmap (DDB).</param>
+        /// <param name="uStartScan">The first scan line to retrieve.</param>
+        /// <param name="cScanLines">The number of scan lines to retrieve.</param>
+        /// <param name="lpvBits">A pointer to a buffer to receive the bitmap data. If this parameter is <see cref="IntPtr.Zero"/>, the function passes the dimensions and format of the bitmap to the <see cref="BITMAPINFO"/> structure pointed to by the <paramref name="lpbi"/> parameter.</param>
+        /// <param name="lpbi">A pointer to a <see cref="BITMAPINFO"/> structure that specifies the desired format for the DIB data.</param>
+        /// <param name="uUsage">The format of the bmiColors member of the <see cref="BITMAPINFO"/> structure. It must be one of the following values.</param>
+        /// <returns>If the lpvBits parameter is non-NULL and the function succeeds, the return value is the number of scan lines copied from the bitmap.
+        /// If the lpvBits parameter is NULL and GetDIBits successfully fills the <see cref="BITMAPINFO"/> structure, the return value is nonzero.
+        /// If the function fails, the return value is zero.
+        /// This function can return the following value: ERROR_INVALID_PARAMETER (87 (0×57))</returns>
+        [DllImport("gdi32.dll", EntryPoint = "GetDIBits")]
+        public static extern int GetDIBits([In] IntPtr hdc, [In] IntPtr hbmp, uint uStartScan, uint cScanLines, [Out] byte[] lpvBits, ref BitmapInfoHeader lpbi, DibColorMode uUsage);
+
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern bool DrawIconEx(IntPtr hdc, int xLeft, int yTop, IntPtr hIcon, int cxWidth, int cyHeight, int istepIfAniCur, IntPtr hbrFlickerFreeDraw, int diFlags);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern IntPtr GetCursorFrameInfo(IntPtr hCursor, IntPtr reserved, int step, ref int rate, ref int numSteps);
 
         ///<summary>Deletes the specified device context (DC).</summary>
         ///<param name="hdc">A handle to the device context.</param>
@@ -1080,6 +1411,9 @@ namespace ScreenToGif.Util
         ///<remarks>An application must not delete a DC whose handle was obtained by calling the <c>GetDC</c> function. Instead, it must call the <c>ReleaseDC</c> function to free the DC.</remarks>
         [DllImport("gdi32.dll", EntryPoint = "DeleteDC")]
         internal static extern bool DeleteDC([In] IntPtr hdc);
+
+        [DllImport("gdi32.dll")]
+        internal static extern int GetObject(IntPtr hgdiobj, int cbBuffer, IntPtr lpvObject);
 
         ///<summary>Deletes a logical pen, brush, font, bitmap, region, or palette, freeing all system resources associated with the object. After the object is deleted, the specified handle is no longer valid.</summary>
         ///<param name="hObject">A handle to a logical pen, brush, font, bitmap, region, or palette.</param>
@@ -1121,6 +1455,31 @@ namespace ScreenToGif.Util
 
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern bool GetWindowRect(IntPtr hwnd, out Rect lpRect);
+
+        [DllImport("user32.dll")]
+        internal static extern bool GetClientRect(IntPtr hWnd, out Rect lpRect);
+
+        /// <summary>
+        /// Retrieves the show state and the restored, minimized, and maximized positions of the specified window.
+        /// </summary>
+        /// <param name="hWnd">
+        /// A handle to the window.
+        /// </param>
+        /// <param name="lpwndpl">
+        /// A pointer to the WINDOWPLACEMENT structure that receives the show state and position information.
+        /// <para>
+        /// Before calling GetWindowPlacement, set the length member to sizeof(WINDOWPLACEMENT). GetWindowPlacement fails if lpwndpl-> length is not set correctly.
+        /// </para>
+        /// </param>
+        /// <returns>
+        /// If the function succeeds, the return value is nonzero.
+        /// <para>
+        /// If the function fails, the return value is zero. To get extended error information, call GetLastError.
+        /// </para>
+        /// </returns>
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetWindowPlacement(IntPtr hWnd, ref WindowPlacement lpwndpl);
 
         [DllImport("dwmapi.dll")]
         private static extern int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out bool pvAttribute, int cbAttribute);
@@ -1437,7 +1796,7 @@ namespace ScreenToGif.Util
         internal static extern bool Shell_NotifyIcon(NotifyCommand cmd, [In] ref NotifyIconData data);
 
         [DllImport("user32.dll", EntryPoint = "CreateWindowExW", SetLastError = true)]
-        internal static extern IntPtr CreateWindowEx(int dwExStyle, [MarshalAs(UnmanagedType.LPWStr)] string lpClassName, [MarshalAs(UnmanagedType.LPWStr)] string lpWindowName, 
+        internal static extern IntPtr CreateWindowEx(int dwExStyle, [MarshalAs(UnmanagedType.LPWStr)] string lpClassName, [MarshalAs(UnmanagedType.LPWStr)] string lpWindowName,
             int dwStyle, int x, int y, int nWidth, int nHeight, IntPtr hWndParent, IntPtr hMenu, IntPtr hInstance, IntPtr lpParam);
 
         /// <summary>
@@ -1471,6 +1830,9 @@ namespace ScreenToGif.Util
         [DllImport("user32.dll")]
         public static extern bool SetForegroundWindow(IntPtr hWnd);
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool ShowWindow(IntPtr hWnd, ShowWindowEnum flags);
 
         /// <summary>
         /// Gets the maximum number of milliseconds that can elapse between a
@@ -1486,11 +1848,17 @@ namespace ScreenToGif.Util
         [DllImport("msvcrt.dll", EntryPoint = "memcpy", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         public static extern IntPtr MemoryCopy(IntPtr dest, IntPtr src, UIntPtr count);
 
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr LocalAlloc(uint uFlags, UIntPtr uBytes);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr LocalFree(IntPtr hMem);
+        
         #endregion
 
         internal delegate bool MonitorEnumProc(IntPtr monitor, IntPtr hdc, IntPtr lprcMonitor, IntPtr lParam);
 
-        private delegate bool EnumWindowsProc(IntPtr hWnd, int lParam);
+        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
         #region Methods
 
@@ -1501,7 +1869,7 @@ namespace ScreenToGif.Util
         /// <param name="height">The size of the final image.</param>
         /// <param name="positionX">Source capture Left position.</param>
         /// <param name="positionY">Source capture Top position.</param>
-        /// <returns>A bitmap withe the capture rectangle.</returns>
+        /// <returns>A bitmap with the capture rectangle.</returns>
         public static BitmapSource CaptureBitmapSource(int width, int height, int positionX, int positionY)
         {
             var hDesk = GetDesktopWindow();
@@ -1538,44 +1906,8 @@ namespace ScreenToGif.Util
         /// <param name="size">The size of the final image.</param>
         /// <param name="positionX">Source capture Left position.</param>
         /// <param name="positionY">Source capture Top position.</param>
-        /// <returns>A bitmap withe the capture rectangle.</returns>
-        public static Image Capture(Size size, int positionX, int positionY)
-        {
-            var hDesk = GetDesktopWindow();
-            var hSrce = GetWindowDC(hDesk);
-            var hDest = CreateCompatibleDC(hSrce);
-            var hBmp = CreateCompatibleBitmap(hSrce, (int)size.Width, (int)size.Height);
-            var hOldBmp = SelectObject(hDest, hBmp);
-
-            try
-            {
-                new System.Security.Permissions.UIPermission(System.Security.Permissions.UIPermissionWindow.AllWindows).Demand();
-
-                var b = BitBlt(hDest, 0, 0, (int)size.Width, (int)size.Height, hSrce, positionX, positionY, CopyPixelOperation.SourceCopy | CopyPixelOperation.CaptureBlt);
-
-                return b ? Image.FromHbitmap(hBmp) : null;
-            }
-            catch (Exception ex)
-            {
-                //LogWriter.Log(ex, "Impossible to get screenshot of the screen");
-            }
-            finally
-            {
-                SelectObject(hDest, hOldBmp);
-                DeleteObject(hBmp);
-                DeleteDC(hDest);
-                ReleaseDC(hDesk, hSrce);
-            }
-
-            return null;
-        }
-
-        public static Image CaptureWithCursor(Size size, int positionX, int positionY, out int cursorPosX, out int cursorPosY)
-        {
-            return CaptureWithCursor((int)size.Width, (int)size.Height, positionX, positionY, out cursorPosX, out cursorPosY);
-        }
-
-        public static Image CaptureWithCursor(int width, int height, int positionX, int positionY, out int cursorPosX, out int cursorPosY)
+        /// <returns>A bitmap with the capture rectangle.</returns>
+        public static Image Capture(int width, int height, int positionX, int positionY)
         {
             var hDesk = GetDesktopWindow();
             var hSrce = GetWindowDC(hDesk);
@@ -1583,55 +1915,11 @@ namespace ScreenToGif.Util
             var hBmp = CreateCompatibleBitmap(hSrce, width, height);
             var hOldBmp = SelectObject(hDest, hBmp);
 
-            cursorPosX = cursorPosY = -1;
-
             try
             {
                 new System.Security.Permissions.UIPermission(System.Security.Permissions.UIPermissionWindow.AllWindows).Demand();
 
                 var b = BitBlt(hDest, 0, 0, width, height, hSrce, positionX, positionY, CopyPixelOperation.SourceCopy | CopyPixelOperation.CaptureBlt);
-
-                #region Cursor
-
-                try
-                {
-                    var cursorInfo = new CursorInfo();
-                    cursorInfo.cbSize = Marshal.SizeOf(cursorInfo);
-
-                    if (GetCursorInfo(out cursorInfo))
-                    {
-                        if (cursorInfo.flags == CursorShowing)
-                        {
-                            var hicon = CopyIcon(cursorInfo.hCursor);
-
-                            if (hicon != IntPtr.Zero)
-                            {
-                                Iconinfo iconInfo;
-                                if (GetIconInfo(hicon, out iconInfo))
-                                {
-                                    cursorPosX = cursorInfo.ptScreenPos.X - positionX;
-                                    cursorPosY = cursorInfo.ptScreenPos.Y - positionY;
-
-                                    if (cursorPosX > 0 && cursorPosY > 0)
-                                        DrawIconEx(hDest, cursorPosX - iconInfo.xHotspot, cursorPosY - iconInfo.yHotspot, cursorInfo.hCursor, 0, 0, 0, IntPtr.Zero, 0x0003);
-                                }
-
-                                DeleteObject(iconInfo.hbmColor);
-                                DeleteObject(iconInfo.hbmMask);
-                            }
-
-                            DestroyIcon(hicon);
-                        }
-
-                        DeleteObject(cursorInfo.hCursor);
-                    }
-                }
-                catch (Exception e)
-                {
-                    //LogWriter.Log(e, "Impossible to get screenshot of the screen");
-                }
-
-                #endregion
 
                 return b ? Image.FromHbitmap(hBmp) : null;
             }
@@ -1643,7 +1931,6 @@ namespace ScreenToGif.Util
             {
                 SelectObject(hDest, hOldBmp);
                 DeleteObject(hBmp);
-                DeleteObject(hOldBmp);
                 DeleteDC(hDest);
                 ReleaseDC(hDesk, hSrce);
             }
@@ -1686,7 +1973,7 @@ namespace ScreenToGif.Util
             return null;
         }
 
-        public static Bitmap CaptureImageCursor(ref Point point, double scale)
+        public static System.Drawing.Bitmap CaptureImageCursor(ref Point point, double scale)
         {
             try
             {
@@ -1703,8 +1990,7 @@ namespace ScreenToGif.Util
                 if (hicon == IntPtr.Zero)
                     return null;
 
-                Iconinfo iconInfo;
-                if (!GetIconInfo(hicon, out iconInfo))
+                if (!GetIconInfo(hicon, out var iconInfo))
                 {
                     DeleteObject(hicon);
                     return null;
@@ -1718,7 +2004,7 @@ namespace ScreenToGif.Util
                     //Is this a monochrome cursor?  
                     if (maskBitmap.Height == maskBitmap.Width * 2 && iconInfo.hbmColor == IntPtr.Zero)
                     {
-                        var final = new Bitmap(maskBitmap.Width, maskBitmap.Width);
+                        var final = new System.Drawing.Bitmap(maskBitmap.Width, maskBitmap.Width);
                         var hDesktop = GetDesktopWindow();
                         var dcDesktop = GetWindowDC(hDesktop);
 
@@ -1764,6 +2050,7 @@ namespace ScreenToGif.Util
             return null;
         }
 
+
         /// <summary>
         /// Draws a rectangle over a Window.
         /// </summary>
@@ -1775,7 +2062,7 @@ namespace ScreenToGif.Util
             if (hWnd == IntPtr.Zero)
                 return;
 
-            var hdc = GetWindowDC(hWnd); //GetWindowDC((IntPtr) null); //
+            var hdc = GetWindowDC(hWnd); //GetWindowDC((IntPtr) null);
 
             GetWindowRect(hWnd, out Rect rect);
 
@@ -1846,8 +2133,7 @@ namespace ScreenToGif.Util
 
         internal static string GetKnowFolderPath(Guid knownFolder, bool defaultUser = false)
         {
-            string path;
-            SHGetKnownFolderPath(knownFolder, (uint)KnownFolderFlags.DontVerify, new IntPtr(defaultUser ? -1 : 0), out path);
+            SHGetKnownFolderPath(knownFolder, (uint)KnownFolderFlags.DontVerify, new IntPtr(defaultUser ? -1 : 0), out var path);
             return path;
         }
 
@@ -1879,7 +2165,7 @@ namespace ScreenToGif.Util
             var windows = new List<DetectedRegion>();
 
             //EnumWindows(delegate (IntPtr handle, int lParam)
-            EnumDesktopWindows(IntPtr.Zero, delegate (IntPtr handle, int lParam)
+            EnumDesktopWindows(IntPtr.Zero, delegate (IntPtr handle, IntPtr lParam)
             {
                 if (handle == shellWindow)
                     return true;
@@ -1933,11 +2219,96 @@ namespace ScreenToGif.Util
             return windows.OrderBy(o => o.Order).ToList();
         }
 
-        public static char? GetCharFromKey(Key key)
+        /// <summary>
+        /// Returns a dictionary that contains the handle and title of all the open windows inside a given monitor.
+        /// </summary>
+        /// <returns>
+        /// A dictionary that contains the handle and title of all the open windows.
+        /// </returns>
+        internal static List<DetectedRegion> EnumerateWindowsByMonitor(Monitor monitor)
+        {
+            var shellWindow = GetShellWindow();
+
+            var windows = new List<DetectedRegion>();
+
+            //EnumWindows(delegate (IntPtr handle, int lParam)
+            EnumDesktopWindows(IntPtr.Zero, delegate (IntPtr handle, IntPtr lParam)
+            {
+                if (handle == shellWindow)
+                    return true;
+
+                if (!IsWindowVisible(handle))
+                    return true;
+
+                if (IsIconic(handle))
+                    return true;
+
+                var length = GetWindowTextLength(handle);
+
+                if (length == 0)
+                    return true;
+
+                var builder = new StringBuilder(length);
+
+                GetWindowText(handle, builder, length + 1);
+                var title = builder.ToString();
+
+                var info = new WindowInfo(false);
+                GetWindowInfo(handle, ref info);
+
+                //If disabled, ignore.
+                if (((long)info.dwStyle & (uint)WindowStyles.Disabled) == (uint)WindowStyles.Disabled)
+                    return true;
+
+                var infoTile = new TitlebarInfo(false);
+                GetTitleBarInfo(handle, ref infoTile);
+
+                if ((infoTile.rgstate[0] & StateSystemInvisible) == StateSystemInvisible)
+                    return true;
+
+                if ((infoTile.rgstate[0] & StateSystemUnavailable) == StateSystemUnavailable)
+                    return true;
+
+                if ((infoTile.rgstate[0] & StateSystemOffscreen) == StateSystemOffscreen)
+                    return true;
+
+                DwmGetWindowAttribute(handle, (int)DwmWindowAttribute.Cloaked, out bool isCloacked, Marshal.SizeOf(typeof(bool)));
+
+                if (isCloacked)
+                    return true;
+
+                DwmGetWindowAttribute(handle, (int)DwmWindowAttribute.ExtendedFrameBounds, out Rect frameBounds, Marshal.SizeOf(typeof(Rect)));
+
+                var bounds = frameBounds.ToRect(Util.Other.RoundUpValue(monitor.Scale), monitor.Scale);
+
+                var place = WindowPlacement.Default;
+                GetWindowPlacement(handle, ref place);
+
+                //Hack for detecting the correct size of VisualStudio when it's maximized.
+                if (place.ShowCmd == ShowWindowCommands.Maximize && title.Contains("Microsoft Visual Studio"))
+                    bounds = frameBounds.ToRect(-info.cxWindowBorders, monitor.Scale);
+                //bounds = new System.Windows.Rect(new Point(monitor.Bounds.Left / monitor.Scale, monitor.Bounds.Top / monitor.Scale), new Size(info.rcClient.Right / monitor.Scale, info.rcClient.Bottom / monitor.Scale));
+
+                //Windows to the left are not being detected as inside the bounds.
+                if (!bounds.IntersectsWith(monitor.Bounds))
+                    return true;
+
+                windows.Add(new DetectedRegion(handle, bounds, title, GetZOrder(handle)));
+
+                return true;
+            }, IntPtr.Zero);
+
+            return windows.OrderBy(o => o.Order).ToList();
+        }
+
+
+        public static char? GetCharFromKey(Key key, bool ignoreState = true)
         {
             var virtualKey = KeyInterop.VirtualKeyFromKey(key);
             var keyboardState = new byte[256];
-            GetKeyboardState(keyboardState);
+
+            if (!ignoreState)
+                GetKeyboardState(keyboardState);
 
             var scanCode = MapVirtualKey((uint)virtualKey, MapType.MapvkVkToVsc);
             var stringBuilder = new StringBuilder(2);
@@ -2081,6 +2452,22 @@ namespace ScreenToGif.Util
             return modifiersText + (isUppercase ? char.ToUpper(result.Value) : result);
         }
 
+        public static string GetSelectKeyText(ModifierKeys modifier = ModifierKeys.None)
+        {
+            //Get the modifers as text.
+            var modifiersText = Enum.GetValues(modifier.GetType()).OfType<ModifierKeys>()
+                .Where(x => x != ModifierKeys.None && modifier.HasFlag(x))
+                .Aggregate("", (current, mod) =>
+                {
+                    if (mod == ModifierKeys.Control) //TODO: Custom mod.ToString();
+                        return current + (string.IsNullOrWhiteSpace(current) ? "" : " + ") + "Ctrl";
+
+                    return current + (string.IsNullOrWhiteSpace(current) ? "" : " + ") + mod;
+                });
+
+            return modifiersText;
+        }
+
         public static int GetZOrder(IntPtr hWnd)
         {
             var z = 0;
@@ -2121,11 +2508,11 @@ namespace ScreenToGif.Util
             return z;
         }
 
-        public static Point GetMousePosition(double scale = 1)
+        public static Point GetMousePosition(double scale = 1, double offsetX = 0, double offsetY = 0)
         {
             var point = new PointW();
             GetCursorPos(ref point);
-            return new Point(point.X / scale, point.Y / scale);
+            return new Point(point.X / scale - offsetX, point.Y / scale - offsetY);
         }
 
         internal static bool ShowFileProperties(string filename)
@@ -2147,193 +2534,59 @@ namespace ScreenToGif.Util
             return ptr;
         }
 
+        /// <summary>
+        /// Gets all first level window handles from a given process.
+        /// The windows must be visible.
+        /// </summary>
+        internal static List<IntPtr> GetWindowHandlesFromProcess(Process process)
+        {
+            var list = new List<IntPtr>();
+
+            //Each thread can create a window.
+            foreach (ProcessThread info in process.Threads)
+            {
+                //With given thread ID, search for windows.
+                var windows = GetWindowHandlesForThread((IntPtr)info.Id);
+
+                if (windows != null)
+                    list.AddRange(windows);
+            }
+
+            return list;
+        }
+
+        private static IntPtr[] GetWindowHandlesForThread(IntPtr threadHandle)
+        {
+            var results = new List<IntPtr>();
+
+            //Enumerate all top level desktop windows.
+            EnumWindows(delegate(IntPtr window, IntPtr thread)
+            {
+                //Get the ID of the thread that created the window.
+                var threadId = GetWindowThreadProcessId(window, out var _);
+
+                //Check if the selected thread created this window.
+                if ((IntPtr)threadId != thread)
+                    return true;
+
+                if (!IsWindowVisible(window))
+                    return true;
+
+                results.Add(window);
+                return true;
+            }, threadHandle);
+
+            return results.ToArray();
+        }
+        
         #endregion
-    }
-
-    internal static class FunctionLoader
-    {
-        [DllImport("Kernel32.dll")]
-        private static extern IntPtr LoadLibrary(string path);
-
-        [DllImport("Kernel32.dll")]
-        private static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
-
-        internal static Delegate LoadFunction<T>(string dllPath, string functionName)
-        {
-            var hModule = LoadLibrary(dllPath);
-            var functionAddress = GetProcAddress(hModule, functionName);
-            return Marshal.GetDelegateForFunctionPointer(functionAddress, typeof(T));
-        }
-    }
-
-    internal class GifskiInterop
-    {
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct GifskiSettings
-        {
-            public GifskiSettings(byte quality, bool looped, bool fast)
-            {
-                Width = 0;
-                Height = 0;
-                Quality = quality;
-                Once = !looped;
-                Fast = fast;
-            }
-
-            /// <summary>
-            /// Resize to max this width if non-0.
-            /// </summary>
-            internal uint Width;
-
-            /// <summary>
-            /// Resize to max this height if width is non-0. Note that aspect ratio is not preserved.
-            /// </summary>
-            internal uint Height;
-
-            /// <summary>
-            /// 1-100. Recommended to set to 100.
-            /// </summary>
-            internal byte Quality;
-
-            /// <summary>
-            /// If true, looping is disabled.
-            /// </summary>
-            internal bool Once;
-
-            /// <summary>
-            /// Lower quality, but faster encode.
-            /// </summary>
-            internal bool Fast;
-        }
-
-        internal enum GifskiError
-        {
-            /// <summary>
-            /// Alright.
-            /// </summary>
-            Ok = 0,
-
-            /// <summary>
-            /// One of input arguments was NULL.
-            /// </summary>
-            NullArgument,
-
-            /// <summary>
-            /// A one-time function was called twice, or functions were called in wrong order.
-            /// </summary>
-            InvalidState,
-
-            /// <summary>
-            /// Internal error related to palette quantization.
-            /// </summary>
-            QuantizationError,
-
-            /// <summary>
-            /// Internal error related to gif composing.
-            /// </summary>
-            GifError,
-
-            /// <summary>
-            /// Internal error related to multithreading.
-            /// </summary>
-            ThreadLost,
-
-            /// <summary>
-            /// I/O error: file or directory not found.
-            /// </summary>
-            NotFound,
-
-            /// <summary>
-            /// I/O error: permission denied.
-            /// </summary>
-            PermissionDenied,
-
-            /// <summary>
-            /// I/O error: File already exists.
-            /// </summary>
-            AlreadyExists,
-
-            /// <summary>
-            /// Misc I/O error.
-            /// </summary>
-            InvalidInput,
-
-            /// <summary>
-            /// Misc I/O error.
-            /// </summary>
-            TimedOut,
-
-            /// <summary>
-            /// Misc I/O error.
-            /// </summary>
-            WriteZero,
-
-            /// <summary>
-            /// Misc I/O error.
-            /// </summary>
-            Interrupted,
-
-            /// <summary>
-            /// Misc I/O error.
-            /// </summary>
-            UnexpectedEof,
-
-            /// <summary>
-            /// Should not happen, file a bug.
-            /// </summary>
-            OtherError
-        }
-
-        private delegate IntPtr NewDelegate(GifskiSettings settings);
-        private delegate GifskiError AddPngFrameDelegate(IntPtr handle, uint index, string path, ushort delay);
-        private delegate GifskiError EndAddingFramesDelegate(IntPtr handle);
-        private delegate GifskiError WriteDelegate(IntPtr handle, string destination);
-        private delegate void DropDelegate(IntPtr handle);
-
-        private static readonly NewDelegate New = (NewDelegate)FunctionLoader.LoadFunction<NewDelegate>(UserSettings.All.GifskiLocation, "gifski_new");
-        private static readonly AddPngFrameDelegate AddPngFrame = (AddPngFrameDelegate)FunctionLoader.LoadFunction<AddPngFrameDelegate>(UserSettings.All.GifskiLocation, "gifski_add_frame_png_file");
-        private static readonly EndAddingFramesDelegate EndAddingFrames = (EndAddingFramesDelegate)FunctionLoader.LoadFunction<EndAddingFramesDelegate>(UserSettings.All.GifskiLocation, "gifski_end_adding_frames");
-        private static readonly WriteDelegate Write = (WriteDelegate)FunctionLoader.LoadFunction<WriteDelegate>(UserSettings.All.GifskiLocation, "gifski_write");
-        private static readonly DropDelegate Drop = (DropDelegate)FunctionLoader.LoadFunction<DropDelegate>(UserSettings.All.GifskiLocation, "gifski_drop");
-
-        internal IntPtr Start(int quality, bool looped = true, bool fast = false)
-        {
-            return New(new GifskiSettings((byte)quality, looped, fast));
-        }
-
-        internal GifskiError AddFrame(IntPtr handle, uint index, string path, int delay)
-        {
-            return AddPngFrame(handle, index, path, (ushort)(delay / 10));
-        }
-
-        internal GifskiError EndAdding(IntPtr handle)
-        {
-            return EndAddingFrames(handle);
-        }
-
-        internal GifskiError WriteFrame(IntPtr handle, string destination)
-        {
-            return Write(handle, destination);
-        }
-
-        internal GifskiError End(IntPtr handle, string destination)
-        {
-            var status = Write(handle, destination);
-
-            if (status != GifskiError.Ok)
-            {
-                Drop(handle);
-                return status;
-            }
-
-            Drop(handle);
-            return GifskiError.Ok;
-        }
     }
 
     internal class WindowMessageSink : IDisposable
     {
         #region Variables/Properties
+
+        private readonly object _lock = new object();
 
         /// <summary>
         /// The ID of messages that are received from the taskbar icon.
@@ -2346,15 +2599,20 @@ namespace ScreenToGif.Util
         private uint _taskbarRestartMessageId;
 
         /// <summary>
-        /// Used to track whether a mouse-up event is just the aftermath of a double-click and therefore needs to be suppressed.
+        /// The number of clicks between the first click and all clicks in between the maximum amount of time of SystemInformation.DoubleClickTime.
         /// </summary>
-        private bool _isDoubleClick;
+        private int _clickCount = 0;
 
         /// <summary>
         /// A delegate that processes messages of the hidden native window that receives window messages. Storing
         /// this reference makes sure we don't loose our reference to the message window.
         /// </summary>
         private Native.WindowProcedureHandler _messageHandler;
+
+        /// <summary>
+        /// Timer used to detect double clicks and ignore unwanted single click events.
+        /// </summary>
+        private readonly Timer _doubleClick = new Timer();
 
         /// <summary>
         /// Window class ID.
@@ -2392,6 +2650,23 @@ namespace ScreenToGif.Util
         public WindowMessageSink()
         {
             CreateMessageWindow();
+
+            _doubleClick.Interval = SystemInformation.DoubleClickTime;
+            _doubleClick.Tick += DoubleClick_Tick;
+        }
+
+        private void DoubleClick_Tick(object sender, EventArgs e)
+        {
+            lock (_lock)
+            {
+                if (_clickCount <= 0)
+                    return;
+
+                MouseEventReceived?.Invoke(_clickCount > 1 ? MouseEventType.IconLeftDoubleClick : MouseEventType.IconLeftMouseUp);
+
+                _clickCount = 0;
+                _doubleClick.Stop();
+            }
         }
 
         ~WindowMessageSink()
@@ -2443,15 +2718,15 @@ namespace ScreenToGif.Util
         {
             if (messageId == _taskbarRestartMessageId)
             {
-                //recreate the icon if the taskbar was restarted (e.g. due to Win Explorer shutdown)
+                //Recreate the icon if the taskbar was restarted (for example due to Windows Explorer shutdown).
                 var listener = TaskbarCreated;
                 listener?.Invoke();
             }
 
-            //forward message
+            //Forward the message.
             ProcessWindowMessage(messageId, wparam, lparam);
 
-            // Pass the message to the default window procedure
+            //Pass the message to the default window procedure.
             return Native.DefWindowProc(hwnd, messageId, wparam, lparam);
         }
 
@@ -2463,7 +2738,8 @@ namespace ScreenToGif.Util
         /// <param name="lParam">Provides information about the event.</param>
         private void ProcessWindowMessage(uint msg, IntPtr wParam, IntPtr lParam)
         {
-            if (msg != CallbackMessageId) return;
+            if (msg != CallbackMessageId) 
+                return;
 
             switch (lParam.ToInt32())
             {
@@ -2475,16 +2751,22 @@ namespace ScreenToGif.Util
                     MouseEventReceived(MouseEventType.IconLeftMouseDown);
                     break;
 
-                case 0x202:
-                    if (!_isDoubleClick)
-                        MouseEventReceived(MouseEventType.IconLeftMouseUp);
+                case 0x202: //Left click.
+                    _clickCount++;
 
-                    _isDoubleClick = false;
+                    if (_clickCount == 1)
+                        _doubleClick.Start();
+
                     break;
 
                 case 0x203:
-                    _isDoubleClick = true;
-                    MouseEventReceived(MouseEventType.IconDoubleClick);
+                    lock (_lock)
+                    {
+                        _clickCount = -1; //Puts down to -1 to avoid a third call by the mouse up.
+                        _doubleClick.Stop();
+
+                        MouseEventReceived(MouseEventType.IconLeftDoubleClick);   
+                    }
                     break;
 
                 case 0x204:
@@ -2542,9 +2824,13 @@ namespace ScreenToGif.Util
                 return;
 
             IsDisposed = true;
-            
+
             Native.DestroyWindow(MessageWindowHandle);
             _messageHandler = null;
+
+            _doubleClick.Tick -= DoubleClick_Tick;
+            _doubleClick.Stop();
+            _doubleClick.Dispose();
         }
     }
 
@@ -2559,6 +2845,8 @@ namespace ScreenToGif.Util
         public string Name { get; private set; }
 
         public int Dpi { get; private set; }
+        
+        public double Scale => Dpi / 96d;
 
         public bool IsPrimary { get; private set; }
 
@@ -2577,14 +2865,13 @@ namespace ScreenToGif.Util
                         info.rcWork.Right - info.rcWork.Left,
                         info.rcWork.Bottom - info.rcWork.Top);
 
-            IsPrimary = (info.dwFlags & Native.MonitorinfofPrimary) != 0;
+            IsPrimary = (info.dwFlags & Native.MonitorinfoPrimary) != 0;
 
             Name = new string(info.szDevice).TrimEnd((char)0);
 
             try
             {
-                uint aux = 0;
-                Native.GetDpiForMonitor(monitor, Native.DpiType.Effective, out aux, out aux);
+                Native.GetDpiForMonitor(monitor, Native.DpiType.Effective, out var aux, out _);
                 Dpi = aux > 0 ? (int)aux : 96;
             }
             catch (Exception)
@@ -2624,6 +2911,30 @@ namespace ScreenToGif.Util
             {
                 monitor.Bounds = new Rect(monitor.Bounds.X / scale, monitor.Bounds.Y / scale, monitor.Bounds.Width / scale, monitor.Bounds.Height / scale);
                 monitor.WorkingArea = new Rect(monitor.WorkingArea.X / scale, monitor.WorkingArea.Y / scale, monitor.WorkingArea.Width / scale, monitor.WorkingArea.Height / scale);
+            }
+
+            return monitors;
+        }
+
+        public static List<Monitor> AllMonitorsGranular(bool offset = false)
+        {
+            var monitors = AllMonitors;
+
+            if (offset)
+            {
+                foreach (var monitor in monitors)
+                {
+                    monitor.Bounds = new Rect(monitor.Bounds.X - SystemParameters.VirtualScreenLeft, monitor.Bounds.Y / monitor.Scale - SystemParameters.VirtualScreenTop, monitor.Bounds.Width / monitor.Scale, monitor.Bounds.Height / monitor.Scale);
+                    monitor.WorkingArea = new Rect(monitor.WorkingArea.X / monitor.Scale - SystemParameters.VirtualScreenLeft, monitor.WorkingArea.Y / monitor.Scale - SystemParameters.VirtualScreenTop, monitor.WorkingArea.Width / monitor.Scale, monitor.WorkingArea.Height / monitor.Scale);
+                }
+
+                return monitors;
+            }
+
+            foreach (var monitor in monitors)
+            {
+                monitor.Bounds = new Rect(monitor.Bounds.X / monitor.Scale, monitor.Bounds.Y / monitor.Scale, monitor.Bounds.Width / monitor.Scale, monitor.Bounds.Height / monitor.Scale);
+                monitor.WorkingArea = new Rect(monitor.WorkingArea.X / monitor.Scale, monitor.WorkingArea.Y / monitor.Scale, monitor.WorkingArea.Width / monitor.Scale, monitor.WorkingArea.Height / monitor.Scale);
             }
 
             return monitors;

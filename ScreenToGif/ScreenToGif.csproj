@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ScreenToGif</RootNamespace>
     <AssemblyName>ScreenToGif</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
@@ -106,6 +106,15 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpDX.4.2.0\lib\net45\SharpDX.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.Direct3D11, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpDX.Direct3D11.4.2.0\lib\net45\SharpDX.Direct3D11.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.DXGI, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpDX.DXGI.4.2.0\lib\net45\SharpDX.DXGI.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -150,6 +159,7 @@
     <Compile Include="Controls\AdornerControl.cs" />
     <Compile Include="Controls\AttachmentListBoxItem.cs" />
     <Compile Include="Controls\AwareTabItem.cs" />
+    <Compile Include="Controls\BaseWindow.cs" />
     <Compile Include="Controls\CircularProgressBar.cs" />
     <Compile Include="Controls\ColorBox.cs" />
     <Compile Include="Controls\CroppingAdorner.cs" />
@@ -161,6 +171,7 @@
     <Compile Include="Controls\DynamicGrid.cs" />
     <Compile Include="Controls\EncoderListViewItem.cs" />
     <Compile Include="Controls\ExtendedCheckBox.cs" />
+    <Compile Include="Controls\ExtendedProgressBar.cs" />
     <Compile Include="Controls\ExtendedTextBox.cs" />
     <Compile Include="Controls\FrameListBoxItem.cs" />
     <Compile Include="Controls\FrameworkElementAdorner.cs" />
@@ -169,9 +180,19 @@
     <Compile Include="Controls\ImageCard.cs" />
     <Compile Include="Controls\LabelSeparator.cs" />
     <Compile Include="Controls\ElementAdorner.cs" />
-    <Compile Include="Controls\NotificationListControl.cs" />
+    <Compile Include="Controls\NotificationBox.cs" />
     <Compile Include="Controls\NotifyIcon.cs" />
+    <Compile Include="Controls\QuantizationMethodItem.cs" />
     <Compile Include="Controls\RecorderWindow.cs" />
+    <Compile Include="Controls\Ribbon\GroupSizeDefinition.cs" />
+    <Compile Include="Controls\Ribbon\ItemSizeDefinition.cs" />
+    <Compile Include="Controls\Ribbon\Ribbon.cs" />
+    <Compile Include="Controls\Ribbon\RibbonGroupPanel.cs" />
+    <Compile Include="Controls\Ribbon\RibbonPanel.cs" />
+    <Compile Include="Controls\Ribbon\RibbonGroup.cs" />
+    <Compile Include="Controls\Ribbon\RibbonItem.cs" />
+    <Compile Include="Controls\Ribbon\RibbonTab.cs" />
+    <Compile Include="Controls\SelectControl.cs" />
     <Compile Include="Controls\Shapes\Arrow.cs" />
     <Compile Include="Controls\Shapes\Triangle.cs" />
     <Compile Include="Controls\SplitButton.cs" />
@@ -196,7 +217,7 @@
     <Compile Include="Controls\PuncturedRect.cs" />
     <Compile Include="Controls\RadialPanel.cs" />
     <Compile Include="Controls\RangeSlider.cs" />
-    <Compile Include="Controls\SelectControl.cs" />
+    <Compile Include="Controls\SelectControlOld.cs" />
     <Compile Include="Controls\ResizingAdorner.cs" />
     <Compile Include="Controls\SpectrumSlider.cs" />
     <Compile Include="Controls\StatusBand.cs" />
@@ -208,17 +229,18 @@
     <Compile Include="Controls\ZoomBox.cs" />
     <Compile Include="ImageUtil\Apng\Apng.cs" />
     <Compile Include="ImageUtil\Apng\Chunks\ActlChunk.cs" />
+    <Compile Include="ImageUtil\Apng\Chunks\ApngFrame.cs" />
     <Compile Include="ImageUtil\Apng\Chunks\Chunk.cs" />
     <Compile Include="ImageUtil\Apng\Chunks\FctlChunk.cs" />
     <Compile Include="ImageUtil\Apng\Chunks\FdatChunk.cs" />
     <Compile Include="ImageUtil\Apng\Chunks\IdatChunk.cs" />
-    <Compile Include="ImageUtil\Apng\Chunks\IendChunk.cs" />
     <Compile Include="ImageUtil\Apng\Chunks\IhdrChunk.cs" />
     <Compile Include="ImageUtil\Gif\Encoder\GifFile.cs" />
-    <Compile Include="ImageUtil\Gif\LegacyEncoder\AnimatedGifEncoder.cs" />
+    <Compile Include="ImageUtil\Gif\Encoder\Quantization\MostUsedQuantizer.cs" />
+    <Compile Include="ImageUtil\Gif\Encoder\Quantization\NeuralQuantizer.cs" />
+    <Compile Include="ImageUtil\Gif\Encoder\Quantization\MedianCutQuantizer.cs" />
     <Compile Include="ImageUtil\Gif\LegacyEncoder\GifEncoder.cs" />
     <Compile Include="ImageUtil\Gif\LegacyEncoder\LZWEncoder.cs" />
-    <Compile Include="ImageUtil\Gif\LegacyEncoder\NeuQuant.cs" />
     <Compile Include="ImageUtil\Gif\LegacyEncoder\PixelUtilOld.cs" />
     <Compile Include="ImageUtil\Gif\Decoder\GifApplicationExtension.cs" />
     <Compile Include="ImageUtil\Gif\Decoder\GifBlock.cs" />
@@ -266,23 +288,47 @@
     <Compile Include="ImageUtil\Psd\LayerInfo.cs" />
     <Compile Include="ImageUtil\Psd\LayerRecord.cs" />
     <Compile Include="ImageUtil\Psd\Psd.cs" />
-    <Compile Include="ModelEx\FrameModel.cs" />
-    <Compile Include="ModelEx\LayerModel.cs" />
-    <Compile Include="ModelEx\Layers\CinemagraphLayer.cs" />
-    <Compile Include="ModelEx\Layers\DrawingLayer.cs" />
-    <Compile Include="ModelEx\Layers\MouseClickLayer.cs" />
-    <Compile Include="ModelEx\Layers\ObfuscationLayer.cs" />
-    <Compile Include="ModelEx\Layers\ProgressLayer.cs" />
-    <Compile Include="ModelEx\Layers\ShapeLayer.cs" />
-    <Compile Include="ModelEx\Layers\TextLayer.cs" />
-    <Compile Include="ModelEx\ProjectModel.cs" />
+    <Compile Include="ModelEx\Project.cs" />
+    <Compile Include="ModelEx\Sequence.cs" />
+    <Compile Include="ModelEx\Sequences\BrushSequence.cs" />
+    <Compile Include="ModelEx\Sequences\CursorSequence.cs" />
+    <Compile Include="ModelEx\Sequences\DrawingLayer.cs" />
+    <Compile Include="ModelEx\Sequences\KeySequence.cs" />
+    <Compile Include="ModelEx\Sequences\ObfuscationSequence.cs" />
+    <Compile Include="ModelEx\Sequences\ProgressSequence.cs" />
+    <Compile Include="ModelEx\Sequences\RasterSequence.cs" />
+    <Compile Include="ModelEx\Sequences\ShapeSequence.cs" />
+    <Compile Include="ModelEx\Sequences\SizeableSequence.cs" />
+    <Compile Include="ModelEx\Sequences\SubSequences\CursorEvent.cs" />
+    <Compile Include="ModelEx\Sequences\SubSequences\Frame.cs" />
+    <Compile Include="ModelEx\Sequences\SubSequences\KeyEvent.cs" />
+    <Compile Include="ModelEx\Sequences\SubSequences\Shadow.cs" />
+    <Compile Include="ModelEx\Sequences\TextSequence.cs" />
+    <Compile Include="ModelEx\Track.cs" />
     <Compile Include="Model\BindableBase.cs" />
+    <Compile Include="Model\ExportFrame.cs" />
+    <Compile Include="Model\ExportProject.cs" />
+    <Compile Include="Model\FosshubItem.cs" />
+    <Compile Include="Model\FosshubRelease.cs" />
+    <Compile Include="Model\FosshubResponse.cs" />
+    <Compile Include="Model\ShadowModel.cs" />
     <Compile Include="Model\DefaultTaskModel.cs" />
     <Compile Include="Model\FfmpegPreset.cs" />
+    <Compile Include="Model\BorderModel.cs" />
+    <Compile Include="Model\ProgressModel.cs" />
     <Compile Include="Model\KeyStrokesModel.cs" />
     <Compile Include="Model\ManipulatedEventArgs.cs" />
     <Compile Include="Model\DelayModel.cs" />
     <Compile Include="Model\MouseClicksModel.cs" />
+    <Compile Include="UserControls\ShadowPanel.xaml.cs">
+      <DependentUpon>ShadowPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\BorderPanel.xaml.cs">
+      <DependentUpon>BorderPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\ProgressPanel.xaml.cs">
+      <DependentUpon>ProgressPanel.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UserControls\KeyStrokesPanel.xaml.cs">
       <DependentUpon>KeyStrokesPanel.xaml</DependentUpon>
     </Compile>
@@ -299,20 +345,38 @@
     <Compile Include="Util\ActivityHook\UserActivityHook.cs" />
     <Compile Include="Util\Argument.cs" />
     <Compile Include="Util\BitHelper.cs" />
+    <Compile Include="Util\Capture\BaseCapture.cs" />
+    <Compile Include="Util\Capture\DirectCachedCapture.cs" />
+    <Compile Include="Util\Capture\DirectImageCapture.cs" />
+    <Compile Include="Util\Capture\ICapture.cs" />
+    <Compile Include="Util\Capture\CachedCapture.cs" />
+    <Compile Include="Util\Capture\RegionSelectHelper.cs" />
+    <Compile Include="Util\ComboBoxItemTemplateSelector.cs" />
+    <Compile Include="Util\Converters\CenterPopupConverter.cs" />
+    <Compile Include="Util\Converters\ContentToVisibility.cs" />
+    <Compile Include="Util\Converters\DoubleToRadius.cs" />
+    <Compile Include="Util\Converters\InvertedEnumToBool.cs" />
+    <Compile Include="Util\Converters\InvertedIntToVisibility.cs" />
+    <Compile Include="Util\Converters\PercentageToOpacity.cs" />
     <Compile Include="Util\Converters\BoolAndToVisibility.cs" />
     <Compile Include="Util\Converters\BoolOrAndToVisibility.cs" />
+    <Compile Include="Util\Converters\BoolAndOrOrToVisibility.cs" />
     <Compile Include="Util\Converters\EnumToInt.cs" />
     <Compile Include="Util\Converters\FormatConverter.cs" />
     <Compile Include="Util\Converters\IntToVisibility.cs" />
+    <Compile Include="Util\Converters\ScaleConverter.cs" />
     <Compile Include="Util\Converters\ShortcutKeys.cs" />
+    <Compile Include="Util\Converters\StringArrayTypeConverter.cs" />
+    <Compile Include="Util\Converters\StringToStaticResource.cs" />
     <Compile Include="Util\CrcHelper.cs" />
     <Compile Include="Util\DataGridHelper.cs" />
     <Compile Include="Util\DynamicResourceBinding.cs" />
+    <Compile Include="Util\EncodingManager.cs" />
+    <Compile Include="Util\ExtendedStack.cs" />
     <Compile Include="Util\FeedbackHelper.cs" />
     <Compile Include="Util\Framerate.cs" />
     <Compile Include="Util\Clipboard.cs" />
     <Compile Include="Util\ColorExtensions.cs" />
-    <Compile Include="Util\Commands.cs" />
     <Compile Include="Util\Constants.cs" />
     <Compile Include="Util\ControlArgs\RangeArgs.cs" />
     <Compile Include="Util\Converters\AlphaToOpacity.cs" />
@@ -359,11 +423,15 @@
     <Compile Include="Util\Enums.cs" />
     <Compile Include="Util\Extras.cs" />
     <Compile Include="Util\FastRandom.cs" />
+    <Compile Include="Util\FrameworkHelper.cs" />
+    <Compile Include="Util\FunctionLoader.cs" />
+    <Compile Include="Util\GifskiInterop.cs" />
     <Compile Include="Util\HotKey.cs" />
     <Compile Include="Util\HotKeyCollection.cs" />
-    <Compile Include="Model\UpdateModel.cs" />
+    <Compile Include="Model\UpdateAvailable.cs" />
     <Compile Include="Util\MutexList.cs" />
     <Compile Include="Util\NotificationManager.cs" />
+    <Compile Include="Util\Capture\ImageCapture.cs" />
     <Compile Include="Util\ThemeHelper.cs" />
     <Compile Include="Util\WebHelper.cs" />
     <Compile Include="Model\ApplicationModel.cs" />
@@ -407,6 +475,12 @@
     <Compile Include="Webcam\DirectX\Filters.cs" />
     <Compile Include="Windows\EditorEx.xaml.cs">
       <DependentUpon>EditorEx.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\NewRecorder.xaml.cs">
+      <DependentUpon>NewRecorder.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\Other\CacheDialog.xaml.cs">
+      <DependentUpon>CacheDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Windows\Other\FfmpegPresetDialog.xaml.cs">
       <DependentUpon>FfmpegPresetDialog.xaml</DependentUpon>
@@ -459,6 +533,12 @@
     <Compile Include="Windows\Options.xaml.cs">
       <DependentUpon>Options.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Windows\Other\RegionSelection.xaml.cs">
+      <DependentUpon>RegionSelection.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\Other\RegionSelector.xaml.cs">
+      <DependentUpon>RegionSelector.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Windows\Other\SelectFolderDialog.xaml.cs">
       <DependentUpon>SelectFolderDialog.xaml</DependentUpon>
     </Compile>
@@ -500,6 +580,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Resources\Commands.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Resources\Flags.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -521,6 +605,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Resources\Localization\StringResources.es.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\Localization\StringResources.hu.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -568,11 +656,19 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Resources\Localization\StringResources.sw.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Resources\Localization\StringResources.tr.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Resources\Localization\StringResources.uk.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\Localization\StringResources.vi.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -624,6 +720,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Themes\Ribbon.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Themes\DataGrid.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -641,11 +741,24 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Controls\LightWindow.cs" />
+    <None Include="packages.config" />
     <None Include="Themes\Old.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </None>
     <Page Include="Themes\Common.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserControls\ShadowPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserControls\BorderPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserControls\ProgressPanel.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -664,6 +777,14 @@
     <Page Include="Windows\EditorEx.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Windows\NewRecorder.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Windows\Other\CacheDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Windows\Other\FfmpegPresetDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -730,6 +851,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Windows\Options.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Windows\Other\RegionSelection.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Windows\Other\RegionSelector.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

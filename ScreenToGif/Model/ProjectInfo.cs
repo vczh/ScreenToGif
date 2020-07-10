@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Text;
+using System.Windows;
+using ScreenToGif.ImageUtil;
+using ScreenToGif.ImageUtil.Gif.Encoder;
 using ScreenToGif.Util;
 
 namespace ScreenToGif.Model
@@ -29,7 +33,7 @@ namespace ScreenToGif.Model
         /// </summary>
         [DataMember(Order = 2)]
         public List<FrameInfo> Frames { get; set; } = new List<FrameInfo>();
-        
+
         /// <summary>
         /// True if this project was recently created and was not yet loaded by the editor.
         /// </summary>
@@ -42,17 +46,32 @@ namespace ScreenToGif.Model
         [DataMember(Order = 4)]
         public ProjectByType CreatedBy { get; set; } = ProjectByType.Unknown;
 
-        ///// <summary>
-        ///// The dpi of the project.
-        ///// </summary>
-        //[DataMember(Order = 3)]
-        //public double Dpi { get; set; } = 96;
+        /// <summary>
+        /// The width of the canvas.
+        /// </summary>
+        [DataMember(Order = 5)]
+        public int Width { get; set; }
 
-        ////// <summary>
-        ///// The size of the images.
-        ///// </summary>
-        //[DataMember(Order = 4)]
-        //public Size Size { get; set; } = new Size(0, 0);
+        /// <summary>
+        /// The height of the canvas.
+        /// </summary>
+        [DataMember(Order = 6)]
+        public int Height { get; set; }
+
+        /// <summary>
+        /// The base dpi of the project.
+        /// </summary>
+        [DataMember(Order = 7)]
+        public double Dpi { get; set; } = 96;
+
+        /// <summary>
+        /// The base bit depth of the project.
+        /// 32 is RGBA
+        /// 24 is RGB
+        /// </summary>
+        [DataMember(Order = 8)]
+        public double BitDepth { get; set; } = 32;
+
 
         /// <summary>
         /// The full path of project based on current settings.
@@ -80,6 +99,11 @@ namespace ScreenToGif.Model
         public string RedoStackPath => Path.Combine(ActionStackPath, "Redo");
 
         /// <summary>
+        /// The full path to the blob file, used by the recorder to write all frames pixels as a byte array, separated by a delimiter.
+        /// </summary>
+        public string CachePath => Path.Combine(UserSettings.All.TemporaryFolderResolved, "ScreenToGif", "Recording", RelativePath, "Frames.cache");
+
+        /// <summary>
         /// Check if there's any frame on this project.
         /// </summary>
         public bool Any => Frames != null && Frames.Any();
@@ -88,6 +112,7 @@ namespace ScreenToGif.Model
         /// The latest index of the current list of frames, or -1.
         /// </summary>
         public int LatestIndex => Frames?.Count - 1 ?? -1;
+        
 
         #region Methods
 
@@ -173,6 +198,122 @@ namespace ScreenToGif.Model
         public void ReleaseMutex()
         {
             MutexList.Remove(RelativePath);
+        }
+
+        /// <summary>
+        /// Copy all necessary files to a new encode folder.
+        /// </summary>
+        /// <param name="usePadding">True if the file names should have a left pad, to preserve the file ordering.</param>
+        /// <param name="copyJson">True if the Project.json file should be copied too.</param>
+        /// <param name="useBytes">True if the images should be converted to byte array.</param>
+        /// <returns>A list of frames with the new path.</returns>
+        internal ExportProject CopyToExport(bool usePadding = false, bool copyJson = false, bool useBytes = false)
+        {
+            #region Output folder
+
+            var folder = Path.Combine(FullPath, "Encode " + DateTime.Now.ToString("yyyy-MM-dd hh-mm-ss-ff"));
+
+            if (!Directory.Exists(folder))
+                Directory.CreateDirectory(folder);
+
+            #endregion
+
+            var export = new ExportProject();
+
+            if (useBytes)
+            {
+                export.Frames = new List<ExportFrame>();
+                export.ChunkPath = Path.Combine(folder, "Chunk");
+                export.NewChunkPath = Path.Combine(folder, "NewChunk");
+
+                try
+                {
+                    //Create chunk file.
+                    using (var fileStream = new FileStream(export.ChunkPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        var pos = 0L;
+
+                        foreach (var info in Frames)
+                        {
+                            var image = new PixelUtil(info.Path.SourceFrom());
+                            image.LockBits();
+
+                            fileStream.WriteBytes(image.Pixels);
+
+                            export.Frames.Add(new ExportFrame
+                            {
+                                DataPosition = pos,
+                                DataLength = image.Pixels.LongLength, 
+                                Delay = info.Delay, 
+                                Rect = new Int32Rect(0,0, image.Width, image.Height),
+                                ImageDepth = image.Depth
+                            });
+
+                            //Advances in the position.
+                            pos += image.Pixels.LongLength;
+
+                            image.UnlockBitsWithoutCommit();
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    LogWriter.Log(e, "It was impossible to get the image bytes to encode.");
+                    throw;
+                }
+
+                return export;
+            }
+
+            export.UsesFiles = true;
+            export.FramesFiles = new List<FrameInfo>();
+
+            try
+            {
+                #region If it's being exported as project, maintain file naming
+
+                if (copyJson)
+                {
+                    foreach (var info in Frames)
+                    {
+                        var filename = Path.Combine(folder, Path.GetFileName(info.Path));
+
+                        //Copy the image to the folder.
+                        File.Copy(info.Path, filename, true);
+
+                        //Create the new object and add to the list.
+                        export.FramesFiles.Add(new FrameInfo(filename, info.Delay));
+                    }
+
+                    File.Copy(ProjectPath, Path.Combine(folder, "Project.json"), true);
+
+                    return export;
+                }
+
+                #endregion
+
+                //Detect pad size.
+                var pad = usePadding ? (Frames.Count - 1).ToString().Length : 0;
+
+                foreach (var info in Frames)
+                {
+                    //Changes the path of the image. Writes as an ordered list of files, replacing the old filenames.
+                    var filename = Path.Combine(folder, export.FramesFiles.Count.ToString().PadLeft(pad, '0') + ".png");
+
+                    //Copy the image to the folder.
+                    File.Copy(info.Path, filename, true);
+
+                    //Create the new object and add to the list.
+                    export.FramesFiles.Add(new FrameInfo(filename, info.Delay));
+                }
+            }
+            catch (Exception ex)
+            {
+                LogWriter.Log(ex, "It was impossible to copy the files to encode.");
+                throw;
+            }
+
+            return export;
         }
 
         #endregion

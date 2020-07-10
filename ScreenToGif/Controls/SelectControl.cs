@@ -68,6 +68,21 @@ namespace ScreenToGif.Controls
         /// </summary>
         private TextBlock _sizeTextBlock;
 
+        ///// <summary>
+        ///// The grid that holds the sizing controls.
+        ///// </summary>
+        //private Grid _rectGrid;
+
+        ///// <summary>
+        ///// The button that closes the sizing widget.
+        ///// </summary>
+        //private ImageButton _closeRectButton;
+
+        ///// <summary>
+        ///// The grid that enables the movement of the sizing widget.
+        ///// </summary>
+        //private Grid _moveSizeWidgetGrid;
+
         /// <summary>
         /// The start point for the drag operation.
         /// </summary>
@@ -89,6 +104,13 @@ namespace ScreenToGif.Controls
         /// </summary>
         private bool _ready;
 
+        /// <summary>
+        /// True if the hover focus was changed to this selector.
+        /// Other selectors must lose the hover focus.
+        /// This makes the zoom view to be hidden everywhere else.
+        /// </summary>
+        private bool _wasHoverFocusChanged;
+
         public enum ModeType
         {
             Region,
@@ -98,35 +120,54 @@ namespace ScreenToGif.Controls
 
         public List<DetectedRegion> Windows = new List<DetectedRegion>();
 
-        public List<Monitor> Monitors = new List<Monitor>();
-
         public BitmapSource BackImage;
 
         #endregion
 
         #region Dependency Properties
 
-        public static readonly DependencyProperty IsPickingRegionProperty = DependencyProperty.Register("IsPickingRegion", typeof(bool), typeof(SelectControl), new PropertyMetadata(true));
+        public static readonly DependencyProperty ParentLeftProperty = DependencyProperty.Register(nameof(ParentLeft), typeof(double), typeof(SelectControl), new PropertyMetadata(0d));
+        
+        public static readonly DependencyProperty ParentTopProperty = DependencyProperty.Register(nameof(ParentTop), typeof(double), typeof(SelectControl), new PropertyMetadata(0d));
 
-        public static readonly DependencyProperty SelectedProperty = DependencyProperty.Register("Selected", typeof(Rect), typeof(SelectControl), new PropertyMetadata(Rect.Empty, Selected_PropertyChanged));
+        public static readonly DependencyProperty IsPickingRegionProperty = DependencyProperty.Register(nameof(IsPickingRegion), typeof(bool), typeof(SelectControl), new PropertyMetadata(true));
 
-        public static readonly DependencyProperty NonExpandedSelectionProperty = DependencyProperty.Register("NonExpandedSelection", typeof(Rect), typeof(SelectControl), new PropertyMetadata(Rect.Empty));
+        public static readonly DependencyProperty SelectedProperty = DependencyProperty.Register(nameof(Selected), typeof(Rect), typeof(SelectControl), new PropertyMetadata(Rect.Empty, Selected_PropertyChanged));
 
-        public static readonly DependencyProperty FinishedSelectionProperty = DependencyProperty.Register("FinishedSelection", typeof(bool), typeof(SelectControl), new PropertyMetadata(false));
+        public static readonly DependencyProperty NonExpandedSelectionProperty = DependencyProperty.Register(nameof(NonExpandedSelection), typeof(Rect), typeof(SelectControl), new PropertyMetadata(Rect.Empty));
 
-        public static readonly DependencyProperty ModeProperty = DependencyProperty.Register("Mode", typeof(ModeType), typeof(SelectControl), new PropertyMetadata(ModeType.Region, Mode_Changed));
+        public static readonly DependencyProperty FinishedSelectionProperty = DependencyProperty.Register(nameof(FinishedSelection), typeof(bool), typeof(SelectControl), new PropertyMetadata(false));
 
-        public static readonly DependencyProperty ScaleProperty = DependencyProperty.Register("Scale", typeof(double), typeof(SelectControl), new PropertyMetadata(1d, Mode_Changed));
+        public static readonly DependencyProperty ModeProperty = DependencyProperty.Register(nameof(Mode), typeof(ModeType), typeof(SelectControl), new PropertyMetadata(ModeType.Region));
 
-        public static readonly DependencyProperty EmbeddedModeProperty = DependencyProperty.Register("EmbeddedMode", typeof(bool), typeof(SelectControl), new PropertyMetadata(false));
+        public static readonly DependencyProperty ScaleProperty = DependencyProperty.Register(nameof(Scale), typeof(double), typeof(SelectControl), new PropertyMetadata(1d));
 
-        public static readonly RoutedEvent SelectionAcceptedEvent = EventManager.RegisterRoutedEvent("SelectionAccepted", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(SelectControl));
+        public static readonly DependencyProperty EmbeddedModeProperty = DependencyProperty.Register(nameof(EmbeddedMode), typeof(bool), typeof(SelectControl), new PropertyMetadata(false));
 
-        public static readonly RoutedEvent SelectionCanceledEvent = EventManager.RegisterRoutedEvent("SelectionCanceled", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(SelectControl));
+
+        public static readonly RoutedEvent MouseHoveringEvent = EventManager.RegisterRoutedEvent(nameof(MouseHovering), RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(SelectControl));
+
+        public static readonly RoutedEvent SelectionAcceptedEvent = EventManager.RegisterRoutedEvent(nameof(SelectionAccepted), RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(SelectControl));
+
+        public static readonly RoutedEvent SelectionChangedEvent = EventManager.RegisterRoutedEvent(nameof(SelectionChanged), RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(SelectControl));
+
+        public static readonly RoutedEvent SelectionCanceledEvent = EventManager.RegisterRoutedEvent(nameof(SelectionCanceled), RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(SelectControl));
 
         #endregion
 
         #region Properties
+
+        public double ParentLeft
+        {
+            get => (double)GetValue(ParentLeftProperty);
+            set => SetValue(ParentLeftProperty, value);
+        }
+
+        public double ParentTop
+        {
+            get => (double)GetValue(ParentTopProperty);
+            set => SetValue(ParentTopProperty, value);
+        }
 
         public bool IsPickingRegion
         {
@@ -171,10 +212,22 @@ namespace ScreenToGif.Controls
         }
 
 
+        public event RoutedEventHandler MouseHovering
+        {
+            add => AddHandler(MouseHoveringEvent, value);
+            remove => RemoveHandler(MouseHoveringEvent, value);
+        }
+
         public event RoutedEventHandler SelectionAccepted
         {
             add => AddHandler(SelectionAcceptedEvent, value);
             remove => RemoveHandler(SelectionAcceptedEvent, value);
+        }
+
+        public event RoutedEventHandler SelectionChanged
+        {
+            add => AddHandler(SelectionChangedEvent, value);
+            remove => RemoveHandler(SelectionChangedEvent, value);
         }
 
         public event RoutedEventHandler SelectionCanceled
@@ -218,13 +271,16 @@ namespace ScreenToGif.Controls
             _croppedImage = Template.FindName("CroppedImage", this) as Image;
             _zoomTextBlock = Template.FindName("ZoomTextBlock", this) as TextBlock;
             _sizeTextBlock = Template.FindName("SizeTextBlock", this) as TextBlock;
+            //_rectGrid = Template.FindName("RectGrid", this) as Grid;
+            //_closeRectButton = Template.FindName("CloseSizeWidgetButton", this) as ImageButton;
+            //_moveSizeWidgetGrid = Template.FindName("MoveSizeWidgetGrid", this) as Grid;
 
             //if (_topLeft == null || _topRight == null || _bottomLeft == null || _bottomRight == null ||
             //    _top == null || _bottom == null || _left == null || _right == null || _rectangle == null || _mainCanvas == null || _zoomGrid == null || _croppedImage == null)
             //    return;
 
-            Loaded += OnLoaded;
-            Unloaded += OnUnloaded;
+            Loaded += Control_Loaded;
+            Unloaded += Control_Unloaded;
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
 
             //Add handlers for resizing • Corners.
@@ -251,16 +307,13 @@ namespace ScreenToGif.Controls
             _retryButton.Click += (sender, e) => { Retry(); };
             _cancelButton.Click += (sender, e) => { Cancel(); };
 
-            Monitors = Monitor.AllMonitorsScaled(Scale, true);
-        }
-
-        private void SystemEvents_DisplaySettingsChanged(object o, EventArgs eventArgs)
-        {
-            Scale = this.Scale();
-
-            Monitors = Monitor.AllMonitorsScaled(Scale, true);
-
-            //TODO: Adjust the selection and the UI when this happens.
+            //Enable sizing controls.
+            //if (!EmbeddedMode)
+            //{
+            //    _sizeTextBlock.PreviewMouseLeftButtonDown += SizeTextBlock_MouseUp;
+            //    _sizeTextBlock.IsHitTestVisible = true;
+            //    _sizeTextBlock.Cursor = Cursors.Hand;
+            //}
         }
 
         protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
@@ -280,11 +333,14 @@ namespace ScreenToGif.Controls
             }
             else
             {
-                if (Mode == ModeType.Window && _hitTestWindow != null)
-                    Native.SetForegroundWindow(_hitTestWindow.Handle);
-
                 if (Selected.Width > 0 && Selected.Height > 0)
+                {
+                    if (Mode == ModeType.Window && _hitTestWindow != null)
+                        Native.SetForegroundWindow(_hitTestWindow.Handle);
+
+                    Selected = Selected.Offset(-1);
                     RaiseAcceptedEvent();
+                }
             }
 
             e.Handled = true;
@@ -465,7 +521,8 @@ namespace ScreenToGif.Controls
         private void AdjustSelection()
         {
             //If already opened with a region selected, treat as "already selected".
-            if (Selected == Rect.Empty) return;
+            if (Selected == Rect.Empty)
+                return;
 
             FinishedSelection = true;
 
@@ -521,12 +578,11 @@ namespace ScreenToGif.Controls
                 return;
             }
 
-            var monitor = Monitors.FirstOrDefault(x => x.Bounds.Contains(point));
-
-            if (monitor == null)
+            //If this selector got the hover, the other selectors must hide their zoom views.
+            if (!_wasHoverFocusChanged)
             {
-                _zoomGrid.Visibility = Visibility.Hidden;
-                return;
+                _wasHoverFocusChanged = true;
+                RaiseMouseHoveringEvent();
             }
 
             var scaledPoint = point.Scale(Scale);
@@ -534,7 +590,7 @@ namespace ScreenToGif.Controls
 
             try
             {
-                //The image is already 7 pixels offset of the current position. 
+                //The image is already 7 pixels offset of the current position.
                 _croppedImage.Source = new CroppedBitmap(BackImage, new Int32Rect((int)scaledPoint.X, (int)scaledPoint.Y, scaledSize, scaledSize));
             }
             catch (Exception)
@@ -544,18 +600,17 @@ namespace ScreenToGif.Controls
             var top = point.Y - _zoomGrid.ActualHeight - 20;
 
             //Right overflow, adjust to the left.
-            if (monitor.Bounds.Right - point.X < _zoomGrid.ActualWidth + 20)
+            if (ActualWidth - point.X < _zoomGrid.ActualWidth + 20)
                 left = point.X - _zoomGrid.ActualWidth - 20;
 
             //Top overflow, adjust to the bottom.
-            if (point.Y - _zoomGrid.ActualHeight - 20 < monitor.Bounds.Top)
+            if (point.Y - _zoomGrid.ActualHeight - 20 < 0)
                 top = point.Y + 20;
 
             Canvas.SetLeft(_zoomGrid, left);
             Canvas.SetTop(_zoomGrid, top);
 
-            _zoomTextBlock.Text = $"X: {scaledPoint.X + SystemParameters.VirtualScreenLeft} ◇ Y: {scaledPoint.Y + SystemParameters.VirtualScreenTop}";
-
+            _zoomTextBlock.Text = $"X: {Math.Round(point.X + ParentLeft, 2)} ◇ Y: {Math.Round(point.Y + ParentTop, 2)}";
             _zoomGrid.Visibility = Visibility.Visible;
         }
 
@@ -576,22 +631,10 @@ namespace ScreenToGif.Controls
             if (!point.HasValue)
                 return;
 
-            //If the main monitor is not the most left / top one, the bounds of monitors left to / above the main monitor are negative,
-            //But the cursor point is always starting from 0,0
-            //So, the cursor point may not fall into any monitor bounds (exceed the maximum right / bottom coordinate)
-            //As a result, convert the cursor point into the same axis of monitors by plusing the negative left / top coordinate
-            //double minimumMonitorTop = Monitors.Min(x => x.Bounds.Top);
-            //double minimumMonitorLeft = Monitors.Min(x => x.Bounds.Left);
-
-            var absolutePoint = new Point(point.Value.X, point.Value.Y);
-
-            var monitor = Monitors.FirstOrDefault(x => x.Bounds.Contains(absolutePoint));
-
-            if (monitor == null)
-                return;
+            //var absolutePoint = new Point(point.Value.X, point.Value.Y);
 
             //If there's no space at the sides, show inside the rectangle.
-            if (Selected.Width > monitor.Bounds.Width - _statusVerticalSize.Width * 2 && Selected.Height > monitor.Bounds.Height - _statusHorizontalSize.Height * 2)
+            if (Selected.Width > ActualWidth - _statusVerticalSize.Width * 2 && Selected.Height > ActualHeight - _statusHorizontalSize.Height * 2)
             {
                 _statusControlGrid.Rows = 1;
                 _statusControlGrid.Columns = 3;
@@ -609,13 +652,13 @@ namespace ScreenToGif.Controls
 
                 const int margin = 10;
 
-                var canTopLeft = Selected.Top - monitor.Bounds.Top > _statusHorizontalSize.Height + margin || Selected.Left - monitor.Bounds.Left > _statusVerticalSize.Width + margin;
-                var canBottomLeft = monitor.Bounds.Bottom - Selected.Bottom > _statusHorizontalSize.Height + margin || Selected.Left - monitor.Bounds.Left > _statusVerticalSize.Width + margin;
+                var canTopLeft = Selected.Top > _statusHorizontalSize.Height + margin || Selected.Left > _statusVerticalSize.Width + margin;
+                var canBottomLeft = ActualHeight - Selected.Bottom > _statusHorizontalSize.Height + margin || Selected.Left > _statusVerticalSize.Width + margin;
 
                 switch (index)
                 {
                     case 0: //Top Left.
-                        if (Selected.Top - monitor.Bounds.Top > _statusHorizontalSize.Height + margin)
+                        if (Selected.Top > _statusHorizontalSize.Height + margin)
                         {
                             //On top.
                             _statusControlGrid.Rows = 1;
@@ -627,7 +670,7 @@ namespace ScreenToGif.Controls
                             Canvas.SetTop(_statusControlGrid, Selected.Top - _statusControlGrid.ActualHeight - margin);
                             break;
                         }
-                        else if (Selected.Left - monitor.Bounds.Left > _statusVerticalSize.Width + margin)
+                        else if (Selected.Left > _statusVerticalSize.Width + margin)
                         {
                             //To the left.
                             _statusControlGrid.Rows = 3;
@@ -646,7 +689,7 @@ namespace ScreenToGif.Controls
                             goto case 1; //Top right.
 
                     case 1: //Top Right.
-                        if (Selected.Top - monitor.Bounds.Top > _statusHorizontalSize.Height + margin)
+                        if (Selected.Top > _statusHorizontalSize.Height + margin)
                         {
                             //On top.
                             _statusControlGrid.Rows = 1;
@@ -658,7 +701,7 @@ namespace ScreenToGif.Controls
                             Canvas.SetTop(_statusControlGrid, Selected.Top - _statusControlGrid.ActualHeight - margin);
                             break;
                         }
-                        else if (monitor.Bounds.Right - Selected.Right > _statusVerticalSize.Width + margin)
+                        else if (ActualWidth - Selected.Right > _statusVerticalSize.Width + margin)
                         {
                             //To the right.
                             _statusControlGrid.Rows = 3;
@@ -677,7 +720,7 @@ namespace ScreenToGif.Controls
                             goto case 0; //Top left.
 
                     case 2: //Bottom Left.
-                        if (monitor.Bounds.Bottom - Selected.Bottom > _statusHorizontalSize.Height + margin)
+                        if (ActualHeight - Selected.Bottom > _statusHorizontalSize.Height + margin)
                         {
                             //On the bottom.
                             _statusControlGrid.Rows = 1;
@@ -689,7 +732,7 @@ namespace ScreenToGif.Controls
                             Canvas.SetTop(_statusControlGrid, Selected.Bottom + margin);
                             break;
                         }
-                        else if (Selected.Left - monitor.Bounds.Left > _statusVerticalSize.Width + margin)
+                        else if (Selected.Left > _statusVerticalSize.Width + margin)
                         {
                             //To the left.
                             _statusControlGrid.Rows = 3;
@@ -708,7 +751,7 @@ namespace ScreenToGif.Controls
                             goto case 3; //Bottom right.
 
                     case 3: //Bottom Right.
-                        if (monitor.Bounds.Bottom - Selected.Bottom > _statusHorizontalSize.Height + margin)
+                        if (ActualHeight - Selected.Bottom > _statusHorizontalSize.Height + margin)
                         {
                             //On the bottom.
                             _statusControlGrid.Rows = 1;
@@ -720,7 +763,7 @@ namespace ScreenToGif.Controls
                             Canvas.SetTop(_statusControlGrid, Selected.Bottom + margin);
                             break;
                         }
-                        else if (monitor.Bounds.Right - Selected.Right > _statusVerticalSize.Width + margin)
+                        else if (ActualWidth - Selected.Right > _statusVerticalSize.Width + margin)
                         {
                             //To the right.
                             _statusControlGrid.Rows = 3;
@@ -734,9 +777,9 @@ namespace ScreenToGif.Controls
                         }
 
                         if (Selected.Width > Selected.Height && canBottomLeft)
-                            goto case 2; //Bottom left.
-                        else
                             goto case 1; //Top right.
+                        else
+                            goto case 2; //Bottom left.
                 }
             }
 
@@ -798,11 +841,9 @@ namespace ScreenToGif.Controls
                 return;
 
             //If nothing selected, only the Close button will appear.
-            if (Selected.IsEmpty)// || !FinishedSelection)
+            if (Selected.IsEmpty) // || !FinishedSelection)
             {
-                foreach (var monitor in Monitors)
-                    _blindSpots.Add(new Rect(new Point(monitor.Bounds.Right - 40, monitor.Bounds.Top), new Size(40, 40)));
-
+                _blindSpots.Add(new Rect(new Point(ActualWidth - 40, 0), new Size(40, 40)));
                 return;
             }
 
@@ -810,11 +851,13 @@ namespace ScreenToGif.Controls
                 _blindSpots.Add(new Rect(new Point(Canvas.GetLeft(_statusControlGrid), Canvas.GetTop(_statusControlGrid)), new Size(_statusControlGrid.ActualWidth, _statusControlGrid.ActualHeight)));
         }
 
+
         internal void Accept()
         {
             if (!FinishedSelection)
                 return;
 
+            Selected = Selected.Offset(-1);
             RaiseAcceptedEvent();
         }
 
@@ -824,7 +867,6 @@ namespace ScreenToGif.Controls
 
             FinishedSelection = false;
 
-            AdjustMode();
             AdjustStatusControls();
             AdjustFlowControls();
             DetectBlindSpots();
@@ -842,6 +884,21 @@ namespace ScreenToGif.Controls
             RaiseCanceledEvent();
         }
 
+        public void HideZoom()
+        {
+            _wasHoverFocusChanged = false;
+            _zoomGrid.Visibility = Visibility.Hidden;
+        }
+
+
+        public void RaiseMouseHoveringEvent()
+        {
+            if (MouseHoveringEvent == null || !IsLoaded)
+                return;
+
+            RaiseEvent(new RoutedEventArgs(MouseHoveringEvent));
+        }
+
         public void RaiseAcceptedEvent()
         {
             if (SelectionAcceptedEvent == null || !IsLoaded)
@@ -850,22 +907,20 @@ namespace ScreenToGif.Controls
             RaiseEvent(new RoutedEventArgs(SelectionAcceptedEvent));
         }
 
+        public void RaiseChangedEvent()
+        {
+            if (SelectionChangedEvent == null || !IsLoaded)
+                return;
+
+            RaiseEvent(new RoutedEventArgs(SelectionChangedEvent));
+        }
+
         public void RaiseCanceledEvent()
         {
             if (SelectionCanceledEvent == null || !IsLoaded)
                 return;
 
             RaiseEvent(new RoutedEventArgs(SelectionCanceledEvent));
-        }
-
-        public void AdjustMode()
-        {
-            if (Mode == ModeType.Window)
-                Windows = Native.EnumerateWindows(Scale).AdjustPosition(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop);
-            else if (Mode == ModeType.Fullscreen)
-                Windows = Monitor.AllMonitorsScaled(Scale, true).Select(x => new DetectedRegion(x.Handle, x.Bounds.Offset(-1), x.Name)).ToList();
-            else
-                Windows.Clear();
         }
 
         private void CalculateStatusGridSizes()
@@ -887,7 +942,7 @@ namespace ScreenToGif.Controls
 
         #region Events
 
-        public void OnLoaded(object o, RoutedEventArgs routedEventArgs)
+        public void Control_Loaded(object o, RoutedEventArgs routedEventArgs)
         {
             _ready = false;
 
@@ -937,69 +992,63 @@ namespace ScreenToGif.Controls
 
             CalculateStatusGridSizes();
 
-            #region For each monitor
+            #region Close button
 
-            foreach (var monitor in Monitors)
+            //Close button.
+            var button = new ImageButton
             {
-                //Close button.
-                var button = new ImageButton
-                {
-                    Name = "CancelButton",
-                    Width = 40,
-                    Height = 40,
-                    ContentHeight = 25,
-                    ContentWidth = 25,
-                    ToolTip = LocalizationHelper.Get("S.Recorder.CancelSelection"),
-                    Content = TryFindResource("Vector.Cancel") as Canvas,
-                    Style = TryFindResource("Style.Button.NoText.White") as Style,
-                    Cursor = Cursors.Arrow,
-                    Tag = "T"
-                };
+                Name = "CancelButton",
+                Width = 40,
+                Height = 40,
+                ContentHeight = 25,
+                ContentWidth = 25,
+                ToolTip = LocalizationHelper.Get("S.Recorder.CancelSelection"),
+                Content = TryFindResource("Vector.Cancel") as Canvas,
+                Style = TryFindResource("Style.Button.NoText.White") as Style,
+                Cursor = Cursors.Arrow,
+                Tag = "T"
+            };
 
-                button.Click += (sender, e) => { Cancel(); };
+            button.Click += (sender, e) => { Cancel(); };
 
-                _mainCanvas.Children.Add(button);
+            _mainCanvas.Children.Add(button);
 
-                Canvas.SetLeft(button, monitor.Bounds.Right - 40);
-                Canvas.SetTop(button, monitor.Bounds.Top);
-                Panel.SetZIndex(button, 8);
+            Canvas.SetLeft(button, ActualWidth - 40);
+            Canvas.SetTop(button, 0);
+            Panel.SetZIndex(button, 8);
 
-                _blindSpots.Add(new Rect(new Point(monitor.Bounds.Right - 40, monitor.Bounds.Top), new Size(40, 40)));
-            }
+            _blindSpots.Add(new Rect(new Point(ActualWidth - 40, 0), new Size(40, 40)));
 
             #endregion
 
             if (Mode == ModeType.Fullscreen)
             {
-                foreach (var monitor in Monitors)
+                var viewBox = new Viewbox
                 {
-                    var viewBox = new Viewbox
+                    Height = ActualHeight,
+                    Width = ActualWidth,
+                    Stretch = Stretch.Uniform,
+                    Tag = "T",
+                    IsHitTestVisible = false,
+                    Child = new TextPath
                     {
-                        Height = monitor.Bounds.Height,
-                        Width = monitor.Bounds.Width,
-                        Stretch = Stretch.Uniform,
-                        Tag = "T",
                         IsHitTestVisible = false,
-                        Child = new TextPath
-                        {
-                            IsHitTestVisible = false,
-                            Text = "👆 " + LocalizationHelper.Get("S.Recorder.SelectScreen"),
-                            Fill = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
-                            Stroke = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)),
-                            StrokeThickness = 1.6,
-                            FontFamily = new FontFamily("Segoe UI"),
-                            FontSize = 80,
-                            FontWeight = FontWeights.SemiBold,
-                            Margin = new Thickness(50)
-                        }
-                    };
+                        Text = "👆 " + LocalizationHelper.Get("S.Recorder.SelectScreen"),
+                        Fill = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
+                        Stroke = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)),
+                        StrokeThickness = 1.6,
+                        FontFamily = new FontFamily("Segoe UI"),
+                        FontSize = 80,
+                        FontWeight = FontWeights.SemiBold,
+                        Margin = new Thickness(50)
+                    }
+                };
 
-                    _mainCanvas.Children.Insert(0, viewBox);
+                _mainCanvas.Children.Insert(0, viewBox);
 
-                    Canvas.SetLeft(viewBox, monitor.Bounds.Left);
-                    Canvas.SetTop(viewBox, monitor.Bounds.Top);
-                    Panel.SetZIndex(viewBox, 0);
-                }
+                Canvas.SetLeft(viewBox, 0);
+                Canvas.SetTop(viewBox, 0);
+                Panel.SetZIndex(viewBox, 0);
             }
             else if (Mode == ModeType.Window)
             {
@@ -1110,40 +1159,37 @@ namespace ScreenToGif.Controls
             }
             else
             {
-                foreach (var monitor in Monitors)
+                var viewBox = new Viewbox
                 {
-                    var viewBox = new Viewbox
+                    Height = ActualHeight,
+                    Width = ActualWidth,
+                    Stretch = Stretch.Uniform,
+                    StretchDirection = StretchDirection.Both,
+                    Tag = "T",
+                    ClipToBounds = true,
+                    IsHitTestVisible = false,
+                    Child = new TextPath
                     {
-                        Height = monitor.Bounds.Height,
-                        Width = monitor.Bounds.Width,
-                        Stretch = Stretch.Uniform,
-                        StretchDirection = StretchDirection.Both,
-                        Tag = "T",
-                        ClipToBounds = true,
                         IsHitTestVisible = false,
-                        Child = new TextPath
-                        {
-                            IsHitTestVisible = false,
-                            Text = LocalizationHelper.Get("S.Recorder.SelectArea"),
-                            Fill = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
-                            Stroke = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)),
-                            StrokeThickness = 1.6,
-                            FontFamily = new FontFamily("Segoe UI"),
-                            FontSize = 80,
-                            FontWeight = FontWeights.SemiBold,
-                            Margin = new Thickness(80),
-                            VerticalAlignment = VerticalAlignment.Stretch,
-                            HorizontalAlignment = HorizontalAlignment.Stretch,
-                            ClipToBounds = true
-                        }
-                    };
+                        Text = LocalizationHelper.Get("S.Recorder.SelectArea"),
+                        Fill = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
+                        Stroke = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)),
+                        StrokeThickness = 1.6,
+                        FontFamily = new FontFamily("Segoe UI"),
+                        FontSize = 80,
+                        FontWeight = FontWeights.SemiBold,
+                        Margin = new Thickness(80),
+                        VerticalAlignment = VerticalAlignment.Stretch,
+                        HorizontalAlignment = HorizontalAlignment.Stretch,
+                        ClipToBounds = true
+                    }
+                };
 
-                    _mainCanvas.Children.Insert(0, viewBox);
+                _mainCanvas.Children.Insert(0, viewBox);
 
-                    Canvas.SetLeft(viewBox, monitor.Bounds.Left);
-                    Canvas.SetTop(viewBox, monitor.Bounds.Top);
-                    Panel.SetZIndex(viewBox, 0);
-                }
+                Canvas.SetLeft(viewBox, 0);
+                Canvas.SetTop(viewBox, 0);
+                Panel.SetZIndex(viewBox, 0);
             }
 
             AdjustSelection();
@@ -1151,7 +1197,12 @@ namespace ScreenToGif.Controls
             _ready = true;
         }
 
-        private void OnUnloaded(object sender, RoutedEventArgs e)
+        private void SystemEvents_DisplaySettingsChanged(object o, EventArgs eventArgs)
+        {
+            Scale = this.Scale();
+        }
+
+        private void Control_Unloaded(object sender, RoutedEventArgs e)
         {
             SystemEvents.DisplaySettingsChanged -= SystemEvents_DisplaySettingsChanged;
 
@@ -1164,30 +1215,52 @@ namespace ScreenToGif.Controls
                 _mainCanvas.Children.Remove(element);
         }
 
+
         private static void Selected_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
         {
             if (!(o is SelectControl control))
                 return;
 
-            var rounded = Other.RoundUpValue(control.Scale);
-
-            var width = Math.Round(control.Selected.Size.Width * control.Scale, MidpointRounding.AwayFromZero) - rounded * 2;
-            var height = Math.Round(control.Selected.Size.Height * control.Scale, MidpointRounding.AwayFromZero) - rounded * 2;
-
-            if (control.Selected.IsEmpty || height <= 0 || width <= 0)
+            //When selecting the Selected region, the UI needs to display the actual size of the selection.
+            //For Region selection, 
+            //For Window and Fullscreen selection, the size will not take into account the rectangle thickness.
+            
+            if (control.Selected.IsEmpty)
             {
                 control.NonExpandedSelection = control.Selected;
                 return;
             }
 
-            control.NonExpandedSelection = new Rect(control.Selected.TopLeft, control.Selected.Size).Scale(control.Scale).Offset(rounded);
-        }
+            if (control.Mode == ModeType.Fullscreen)
+            {
+                control.NonExpandedSelection = control.Selected.Scale(control.Scale);
+                control.RaiseChangedEvent();
+                return;
+            }
+            
+            if (control.Mode == ModeType.Window)
+            {
+                control.NonExpandedSelection = control.Selected.Scale(control.Scale);
+                control.RaiseChangedEvent();
+                return;
+            }
 
-        private static void Mode_Changed(DependencyObject o, DependencyPropertyChangedEventArgs e)
-        {
-            var control = o as SelectControl;
+            if (control.Mode == ModeType.Region)
+            {
+                var rounded = Other.RoundUpValue(control.Scale);
 
-            control?.AdjustMode();
+                var width = Math.Round(control.Selected.Size.Width * control.Scale, MidpointRounding.AwayFromZero) - rounded * 2;
+                var height = Math.Round(control.Selected.Size.Height * control.Scale, MidpointRounding.AwayFromZero) - rounded * 2;
+
+                if (height <= 0 || width <= 0)
+                {
+                    control.NonExpandedSelection = control.Selected;
+                    return;
+                }
+
+                control.NonExpandedSelection = new Rect(control.Selected.TopLeft, control.Selected.Size).Scale(control.Scale).Offset(rounded);
+                control.RaiseChangedEvent();
+            }
         }
 
         private void Rectangle_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -1205,12 +1278,15 @@ namespace ScreenToGif.Controls
             DetectBlindSpots();
             AdjustInfo();
 
+            RaiseChangedEvent(); //Check if makes sense.
+
             e.Handled = true;
         }
 
         private void Rectangle_MouseMove(object sender, MouseEventArgs e)
         {
-            if (Mode != ModeType.Region || !_rectangle.IsMouseCaptured || e.LeftButton != MouseButtonState.Pressed) return;
+            if (Mode != ModeType.Region || !_rectangle.IsMouseCaptured || e.LeftButton != MouseButtonState.Pressed) 
+                return;
 
             //A quick double click will fire this event, when it should fire the OnMouseLeftButtonUp.
             if (Selected.IsEmpty || Selected.Width < 10 || Selected.Height < 10)
@@ -1268,6 +1344,13 @@ namespace ScreenToGif.Controls
 
             e.Handled = true;
         }
+
+        private void SizeTextBlock_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            //Open dialog asking for left/top/width/height.
+            //_rectGrid.Visibility = Visibility.Visible;
+        }
+
 
         ///<summary>
         ///Handler for resizing from the top-left.
